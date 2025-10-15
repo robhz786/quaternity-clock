@@ -338,11 +338,66 @@
       let game = null;
       let quaternityClockDiv = null;
 
+      const wakelockSupported = 'wakeLock' in navigator;
+      let wakelockPromise = null;
+      let wakelockHandle = null;
+      let wakelockAcquired = false;
+
+      if (wakelockSupported) {
+          document.addEventListener('visibilitychange', HandleVisibilityChange);
+      }
+
+      function HandleVisibilityChange() {
+          if (wakelockSupported
+              && GameIsInState("running")
+              && (document.visibilityState === 'visible'))
+          {
+              AcquireWakelock();
+          }
+      }
+
+      function AcquireWakelock() {
+          // see: https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API
+
+          if (wakelockSupported
+              && (wakelockHandle === null || wakelockHandle.released)
+              && wakelockPromise === null) {
+              wakelockPromise = navigator.wakeLock.request('screen')
+                  .then(hdl => {
+                      wakelockPromise = null;
+                      wakelockHandle = hdl;
+                  })
+                  .catch(err => {wakelockPromise = null});
+          }
+      }
+
+      function ReleaseWakelock() {
+          if (wakelockHandle && !wakelockHandle.released) {
+              wakelockHandle.release();
+          }
+      }
+
       function SetGameState(stateName) {
           if (quaternityClockDiv === null) {
               quaternityClockDiv = document.getElementById("quaternity-clock");
           }
-          quaternityClockDiv.dataset.state = stateName;
+          if (quaternityClockDiv !== null) {
+              if (stateName !== quaternityClockDiv.dataset.state) {
+                  quaternityClockDiv.dataset.state = stateName;
+                  if (stateName === "running") {
+                      AcquireWakelock();
+                  } else {
+                      ReleaseWakelock();
+                  }
+              }
+          }
+      }
+
+      function GameIsInState(stateName) {
+          if (quaternityClockDiv !== null) {
+              return quaternityClockDiv.dataset.state === stateName;
+          }
+          return false;
       }
 
       function GotoPausedStateUI(title, subtitle, playersAvailableForUnpausing) {
@@ -541,12 +596,7 @@
           game.Unpause(0);
           GotoUnpausedStateUI();
       }
-      // to-do, see:
-      // https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API
-      //     https://github.com/mdn/dom-examples/tree/main/screen-wake-lock-api
-      //     https://mdn.github.io/dom-examples/screen-wake-lock-api/
-      //
-      // https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Async_JS/Promises
+
     </script>
   </head>
   <body>
