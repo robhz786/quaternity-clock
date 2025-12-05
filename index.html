@@ -116,8 +116,6 @@
           }
           #clocks-container {
               /*https://stackoverflow.com/questions/9185434/using-svg-as-background-image*/
-              background-image: url("background.svg");
-              background-size: calc(2vh + 2vw);
               display: grid;
               --paused-columns-count: 1;
               --unpaused-columns-count: 1;
@@ -134,7 +132,7 @@
               padding-bottom: 2vh;
               /*padding: 10px;*/
 
-              background-color: rgba(0, 0, 0, 0.3);
+              background-color: black; /*rgb(100, 100, 100);*/
           }
           @media only screen and (min-aspect-ratio: 6/5) {
               #clocks-container {
@@ -271,7 +269,7 @@
           .player-clock {
               color: white;
               padding: 0.2vh; /*calc(0.2vh + 0.2vw);*/
-              border: calc(0.2vh + 0.2vw) solid black;
+              border: calc(0.2vh + 0.2vw) solid grey;
               font-size: 4vh;
               text-align: center;
               align-content: center;
@@ -284,7 +282,7 @@
               opacity: 1.0;
           }
           .player-clock[data-status="paused"] {
-              opacity: 0.68;
+              /*opacity: 0.68;*/
           }
           .player-clock[data-status="disabled"] {
               opacity: 0.34;
