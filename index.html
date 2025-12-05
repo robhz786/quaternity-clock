@@ -484,6 +484,17 @@
               game.OnPlayerButtonPressed(playerId);
           }
       }
+      function OnKeyDown(ev) {
+            if (event.key === 'a' || event.key === 'A') {
+                OnPlayerButtonClick(0);
+            } else if (event.key === 'b' || event.key === 'B') {
+                OnPlayerButtonClick(1);
+            } else if (event.key === 'c' || event.key === 'C') {
+                OnPlayerButtonClick(2);
+            } else if (event.key === 'd' || event.key === 'D') {
+                OnPlayerButtonClick(3);
+            }
+      };
       function PromptTerminateGame() {
           SetGameState("confim-terminate");
       }
@@ -596,7 +607,7 @@
           game.Unpause(0);
           GotoUnpausedStateUI();
       }
-
+      document.addEventListener('keydown', OnKeyDown);
     </script>
   </head>
   <body>
@@ -791,19 +802,8 @@
         </div>
 
         <div id="keyboard-div">
-          <button
-            onclick="Pause()"
-            style="margin:0px;padding:0px;border:0px;background-color: rgba(0, 0, 0, 0.0);">
-            &#x23F8;
-          </button>
-
-          <button style="background-color:white;border-color:white" onclick="OnPlayerButtonClick(0)">&nbsp;&nbsp
-          </button>
-          <button style="background-color:red;border-color:white"   onclick="OnPlayerButtonClick(1)">&nbsp;&nbsp
-          </button>
-          <button style="background-color:black;border-color:white" onclick="OnPlayerButtonClick(2)">&nbsp;&nbsp
-          </button>
-          <button style="background-color:green;border-color:white" onclick="OnPlayerButtonClick(3)">&nbsp;&nbsp
+          <button onclick="Pause()">
+            PAUSE
           </button>
         </div>
 
