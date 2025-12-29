@@ -7,59 +7,110 @@
           margin: 0;
           box-sizing: border-box;
       }
-      #quaternity-clock[data-state="setup"] {
-          /* data-state values: setup, running, paused, confirm-terminate, removing-player, over */
 
-          #game-panel,#confirm-terminate-panel-div {
+      /*https://stackoverflow.com/questions/3790935/can-i-hide-the-html5-number-input-s-spin-box*/
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+          /* display: none; <- Crashes Chrome on hover */
+          -webkit-appearance: none;
+          margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+      }
+      input[type="number"] {
+          -moz-appearance:textfield;
+      }
+
+     /* data-state values:
+         setup, running, paused, confirm-terminate, removing-player, over
+       */
+      #quaternity-clock[data-state="setup"] {
+          #game-panel,#confirm-terminate-panel-div,div.inside-legend {
               display: none;
           }
+          /*to avoid the background to became black when on fullscreen*/
+          /*see https://stackoverflow.com/questions/16163089/background-element-goes-black-when-entering-fullscreen-with-html5*/
+          background-color: white;
+          /*::backdrop {
+          background-color: white;
+          }*/
+
           #start-panel-div {
-              font-size: min(9vh, 6vw);
+              padding-top: 4vh;
               display: flex;
               flex-direction: column;
-              justify-content: center;
               align-items: center;
               height: 90vh;
-          }
-          #start-panel-div > .time-inputs {
-              display: flex;
-              width: 90vw;
-              margin: auto;
-              flex-direction: column;
-          }
-          #start-panel-div fieldset {
-              background-color: beige;
-              text-align: right;
-          }
-          #start-panel-div input {
-              text-align: right;
-              font-size: min(9vh, 6vw);
-              width: 2.4em;
-              height: 1.2em;
-          }
-          #start-panel-div button {
-              font-size: min(9vh, 6vw);
-              width: 40vw;
-              height: 2em;
-              margin-top: 0.5em;
-          }
-          @media only screen and (min-aspect-ratio: 2/1) {
-              #start-panel-div {
-                  font-size: min(16vh, 4vw);
+              background-color: white;
+              @media only screen and (aspect-ratio < 2) {
+                  font-size: min(5vh, 6vw);
               }
-              #start-panel-div > .time-inputs {
-                  width: 100vw;
-                  flex-direction: row;
-                  justify-content: space-around;
+              @media only screen and (2 <= aspect-ratio) {
+                  font-size: 7vh
               }
-              #start-panel-div > .time-inputs > div {
-                  width: 45vw;
+              .time-inputs {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  margin: auto;
+                  fieldset {
+                      width: 90vw;
+                      background-color: beige;
+                      display: flex;
+                      flex-direction: row;
+                      justify-content: space-evenly;
+                      input {
+                          font-size: min(8vh, 7vw);
+                          text-align: right;        
+                          width: 2.4em;
+                          height: 1.2em;
+                      }
+                      @media only screen and (1.6 <= aspect-ratio) {
+                          justify-content: space-between;
+                          legend {
+                              display: none;
+                          }
+                          div.inside-legend {
+                              display: block;
+                          }
+                      }          
+                  }
+                  @media only screen and (4 <= aspect-ratio) {
+                      flex-direction: row;
+                      justify-conten: space-between;
+                      width: 90vw;
+                      fieldset { width: 45vw; }
+                  }
               }
-              #start-panel-div input {
-                  font-size:   min(16vh, 4vw);
+              #start-panel-buttons-div {
+                  display: flex;
+                  justify-content: space-between;
+                  width: 90vw;
+                  margin-bottom: 1em;
+                  margin-top: 1em;
+                  button {
+                      height: 2em;
+                      margin-top: 0.5em;
+                  }
+                  @media only screen and (aspect-ratio < 2) {
+                      flex-direction: column;
+                      align-items: center;
+                      button {
+                          font-size: min(7vh, 7vw);
+                          width: 60vw;
+                      }
+                  }
+                  @media only screen and (2 <= aspect-ratio) {
+                      flex-direction: row;
+                      justify-content: space-between;
+                      button {
+                          font-size: 8vh;
+                          width: 40vw;
+                      }
+                  }
               }
-              #start-panel-div button {
-                  font-size:   min(16vh, 4vw);
+              #start-button {
+                  background-color: lightgreen;
+                  font-weight: bold;
+                  /*border: calc(0.15vh + 0.15vw) solid black;*/
               }
           }
       }
@@ -94,18 +145,20 @@
           #paused-title-div {
               border: calc(0.2vh + 0.2vw) solid black;
               background-color: white;
+              margin-bottom: 2vh;
           }
           #paused-title {
-              font-size: 1.2em
+              font-size: 1.2em;
           }
           #paused-subtitle {
-              font-size: 0.8em
+              font-size: 0.8em;
           }
           #paused-state-pannel > .button-div {
               /*min-height: 10vh;*/
-              display: flex;
+              /*display: flex;*/
               justify-content: center;
               align-items: center;
+              margin-bottom: 2vh;
               /*margin-top: 8vh;*/
           }
           #paused-state-pannel > .button-div > button {
@@ -125,13 +178,11 @@
               column-gap: 2vw;
               row-gap: 2vh;
               /*gap: 10px;*/
-
               padding-left: 2vw;
               padding-right: 2vw;
               padding-top: 2vh;
               padding-bottom: 2vh;
               /*padding: 10px;*/
-
               background-color: black; /*rgb(100, 100, 100);*/
           }
           @media only screen and (min-aspect-ratio: 6/5) {
@@ -180,7 +231,7 @@
       }
       #quaternity-clock[data-state="paused"] {
           #remove-player-button-div {
-              display: block;
+              display: flex;
           }
           #confirm-terminate-panel-div {
               display: none;
@@ -251,7 +302,7 @@
       }
       #quaternity-clock[data-state="over"] {
           #new-game-button-div {
-              display: block;
+              display: flex;
           }
           #confirm-terminate-panel-div {
               display: none;
@@ -264,6 +315,20 @@
       }
       #quaternity-clock:not([data-state="running"]) #clocks-container > .player-clock {
           font-size: var(--paused-clock-font-size);
+      }
+      .when-not-on-fullscreen {
+          display: flex;
+      }
+      .when-on-fullscreen {
+          display: none;
+      }
+      :fullscreen {
+          .when-not-on-fullscreen {
+              display: none;
+          }
+          .when-on-fullscreen {
+              display: flex;
+          }
       }
       #clocks-container {
           .player-clock {
@@ -331,7 +396,6 @@
     <script src="quaternity_clock.js"></script>
     <script>
       const playersNames = ["White", "Red", "Black", "Green"];
-
       const regexInteger = /^[0-9]+$/;
       let game = null;
       let quaternityClockDiv = null;
@@ -340,6 +404,14 @@
       let wakelockPromise = null;
       let wakelockHandle = null;
       let wakelockAcquired = false;
+
+      function EnterFullscreen() {
+          document.getElementById("quaternity-clock").requestFullscreen();
+      }
+
+      function ExitFullscreen() {
+          document.exitFullscreen();
+      }
 
       if (wakelockSupported) {
           document.addEventListener('visibilitychange', HandleVisibilityChange);
@@ -400,8 +472,8 @@
 
       function GotoPausedStateUI(title, subtitle, playersAvailableForUnpausing) {
           SetGameState("paused");
-          document.getElementById("terminate-game-button-div").style.display = "block";
-          document.getElementById("remove-player-button-div").style.display = "block";
+          document.getElementById("terminate-game-button-div").style.display = "flex";
+          document.getElementById("remove-player-button-div").style.display = "flex";
           document.getElementById("new-game-button-div").style.display = "none";
           SetPausedPanelTitle(title, subtitle);
           EnableUnpauseButtons(playersAvailableForUnpausing);
@@ -465,7 +537,7 @@
           const playersForUnpausing = checked ? game.DisablePlayer(idx) : game.ReEnablePlayer(idx);
           EnableUnpauseButtons(playersForUnpausing);
           document.getElementById("terminate-game-button-div").style.display =
-              playersForUnpausing.length === 0 ? "block" : "none";
+              playersForUnpausing.length === 0 ? "flex" : "none";
       }
       function Pause() {
           if (game) {
@@ -534,7 +606,7 @@
           AlertGameOver(subtitle) {
               SetGameState("over");
               SetPausedPanelTitle("GAME OVER", subtitle);
-              document.getElementById("new-game-button-div").style.display = "block";
+              document.getElementById("new-game-button-div").style.display = "flex";
               document.getElementById("unpause-buttons-div").style.display = "none";
               document.getElementById("remove-player-button-div").style.display = "none";
               document.getElementById("terminate-game-button-div").style.display = "none";
@@ -586,7 +658,7 @@
                   return;
               }
           }
-          document.getElementById("start-panel-error").textContent = "Invalid Intput";
+          document.getElementById("start-panel-error").textContent = "Invalid Input";
       }
       function DoStart(time_sec, addSecs) {
           SetGameState("running");
@@ -611,14 +683,23 @@
   <body>
     <div id="quaternity-clock" data-state="setup">
       <div id="start-panel-div">
-        <div class="time-inputs" style="flex-grow: 1">
+        <div class="time-inputs">
           <div>
             <fieldset>
               <legend>
-                Time per player
+                Time per player:
               </legend>
-              <input id="minutes" type="number" min="0" max="9999" step="1" value="12"> min
-              <input id="seconds" type="number" min="0" max="59" step="1" value="00"> sec
+          <div class="inside-legend">
+            Time per player:
+          </div>
+          <div>
+            <input id="minutes" type="number" min="0" max="9999" value="12">
+            min
+          </div>
+          <div>
+          <input id="seconds" type="number" min="0" max="59"  value="00">
+          sec
+          </div>
             </fieldset>
           </div>
           <div>
@@ -626,17 +707,36 @@
               <legend>
                 Extra per move:
               </legend>
-              <input id="addSecondsEachMove" type="number" min="0" max="59" step="1" value="5">
-              sec
+          <div class="inside-legend">
+        Extra per move:
+          </div>
+          <div>
+        <input id="addSecondsEachMove" type="number" min="0" max="59" step="1" value="5">
+        sec
+          </div>
             </fieldset>
           </div>
+        </div>
+        <div id="start-panel-buttons-div">
+          <div class="button-div when-not-on-fullscreen">
+            <button onclick="EnterFullscreen()">
+              Enter Fullscreen
+            </button>
+          </div>
 
+          <div class="button-div when-on-fullscreen">
+            <button onclick="ExitFullscreen()">
+              Quit fullscreen
+            </button>
+          </div>
+
+          <div id="start-button-div">
+            <button id="start-button" onClick="Start()">
+              Start
+            </button>
+          </div>
         </div>
-        <div id="start-button-div" style="flex-grow:4">
-          <button onClick="Start()">
-            Start
-          </button>
-        </div>
+
         <div id="start-panel-error">
         </div>
       </div>
@@ -712,6 +812,18 @@
           <div class="button-div" id="new-game-button-div" style="display:none">
             <button onclick="StartNewGame()" style="width:80%">
               Start new game
+            </button>
+          </div>
+
+          <div class="button-div when-not-on-fullscreen">
+            <button onclick="EnterFullscreen()" style="width:80%">
+              Enter Fullscreen
+            </button>
+          </div>
+
+          <div class="button-div when-on-fullscreen">
+            <button onclick="ExitFullscreen()" style="width:80%">
+              Quit fullscreen
             </button>
           </div>
 
