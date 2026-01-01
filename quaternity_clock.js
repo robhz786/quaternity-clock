@@ -15,7 +15,7 @@ function playBeep(duration_sec) {
     oscillator.stop(audioCtx.currentTime + duration_sec);
 }
 
-class QuaternityPlayerClock {
+class QuaternityPlayerClockDisplay {
     constructor(time_sec, additionPerRound_sec) {
         this.onGame = true;
         this._remainingTime_ms = time_sec * 1000;

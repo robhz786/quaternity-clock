@@ -596,7 +596,7 @@
           }
           AlertPlayerLostByTime(playerId, nextPlayerArr) {
               this.DisablePlayer(playerId);
-              const subtitle = `${playersNames[playerId]} lost by time`;
+              const subtitle = `${playersNames[playerId]} lost by timeout`;
               if (nextPlayerArr && nextPlayerArr.length !== 0) {
                   GotoPausedStateUI("GAME PAUSED", subtitle, nextPlayerArr);
               } else {
@@ -663,10 +663,10 @@
       function DoStart(time_sec, addSecs) {
           SetGameState("running");
           const players = [
-              new QuaternityPlayerClock(time_sec, addSecs),
-              new QuaternityPlayerClock(time_sec, addSecs),
-              new QuaternityPlayerClock(time_sec, addSecs),
-              new QuaternityPlayerClock(time_sec, addSecs)
+              new QuaternityPlayerClockDisplay(time_sec, addSecs),
+              new QuaternityPlayerClockDisplay(time_sec, addSecs),
+              new QuaternityPlayerClockDisplay(time_sec, addSecs),
+              new QuaternityPlayerClockDisplay(time_sec, addSecs)
           ];
           const ui = new UI();
           for (const i in players) {
