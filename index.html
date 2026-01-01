@@ -3,681 +3,681 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
-      * {
-          margin: 0;
-          box-sizing: border-box;
-      }
-
-      /*https://stackoverflow.com/questions/3790935/can-i-hide-the-html5-number-input-s-spin-box*/
-      input::-webkit-outer-spin-button,
-      input::-webkit-inner-spin-button {
-          /* display: none; <- Crashes Chrome on hover */
-          -webkit-appearance: none;
-          margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
-      }
-      input[type="number"] {
-          -moz-appearance:textfield;
-      }
+     * {
+         margin: 0;
+         box-sizing: border-box;
+     }
+     
+     /*https://stackoverflow.com/questions/3790935/can-i-hide-the-html5-number-input-s-spin-box*/
+     input::-webkit-outer-spin-button,
+     input::-webkit-inner-spin-button {
+         /* display: none; <- Crashes Chrome on hover */
+         -webkit-appearance: none;
+         margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+     }
+     input[type="number"] {
+         -moz-appearance:textfield;
+     }
 
      /* data-state values:
-         setup, running, paused, confirm-terminate, removing-player, over
-       */
-      #quaternity-clock[data-state="setup"] {
-          #game-panel,#confirm-terminate-panel-div,div.inside-legend {
-              display: none;
-          }
-          /*to avoid the background to became black when on fullscreen*/
-          /*see https://stackoverflow.com/questions/16163089/background-element-goes-black-when-entering-fullscreen-with-html5*/
-          background-color: white;
-          /*::backdrop {
-          background-color: white;
-          }*/
+        setup, running, paused, confirm-terminate, removing-player, over
+      */
+     #quaternity-clock[data-state="setup"] {
+         #game-panel,#confirm-terminate-panel-div,div.inside-legend {
+             display: none;
+         }
+         /*to avoid the background to became black when on fullscreen*/
+         /*see https://stackoverflow.com/questions/16163089/background-element-goes-black-when-entering-fullscreen-with-html5*/
+         background-color: white;
+         /*::backdrop {
+            background-color: white;
+            }*/
 
-          #start-panel-div {
-              padding-top: 4vh;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              height: 90vh;
-              background-color: white;
-              @media only screen and (aspect-ratio < 2) {
-                  font-size: min(5vh, 6vw);
-              }
-              @media only screen and (2 <= aspect-ratio) {
-                  font-size: 7vh
-              }
-              .time-inputs {
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  margin: auto;
-                  fieldset {
-                      width: 90vw;
-                      background-color: beige;
-                      display: flex;
-                      flex-direction: row;
-                      justify-content: space-evenly;
-                      input {
-                          font-size: min(8vh, 7vw);
-                          text-align: right;        
-                          width: 2.4em;
-                          height: 1.2em;
-                      }
-                      @media only screen and (1.6 <= aspect-ratio) {
-                          justify-content: space-between;
-                          legend {
-                              display: none;
-                          }
-                          div.inside-legend {
-                              display: block;
-                          }
-                      }          
-                  }
-                  @media only screen and (4 <= aspect-ratio) {
-                      flex-direction: row;
-                      justify-conten: space-between;
-                      width: 90vw;
-                      fieldset { width: 45vw; }
-                  }
-              }
-              #start-panel-buttons-div {
-                  display: flex;
-                  justify-content: space-between;
-                  width: 90vw;
-                  margin-bottom: 1em;
-                  margin-top: 1em;
-                  button {
-                      height: 2em;
-                      margin-top: 0.5em;
-                  }
-                  @media only screen and (aspect-ratio < 2) {
-                      flex-direction: column;
-                      align-items: center;
-                      button {
-                          font-size: min(7vh, 7vw);
-                          width: 60vw;
-                      }
-                  }
-                  @media only screen and (2 <= aspect-ratio) {
-                      flex-direction: row;
-                      justify-content: space-between;
-                      button {
-                          font-size: 8vh;
-                          width: 40vw;
-                      }
-                  }
-              }
-              #start-button {
-                  background-color: lightgreen;
-                  font-weight: bold;
-                  /*border: calc(0.15vh + 0.15vw) solid black;*/
-              }
-          }
-      }
-      #keyboard-div,#remove-players-div {
-          display: none;
-      }
-      #quaternity-clock:not([data-state="setup"]) {
-          #start-panel-div {
-              display: none;
-          }
-          #game-panel {
-              min-height: 100vh;
-              display: flex;
-              flex-direction: column;
-              align-items: stretch;
-              justify-content: center;
-              text-align: center;
-              --unpaused-clock-font-size: min(12vh, 20vw);
-              --paused-clock-font-size: 3vh;
-              background-color: black;
-          }
-          #paused-state-pannel {
-              font-size: min(8vh, 10vw);
-              background-color: rgb(155, 155, 155);
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              padding-left: 2vw;
-              padding-right: 2vw;
-              min-height: 65vh;
-          }
-          #paused-title-div {
-              border: calc(0.2vh + 0.2vw) solid black;
-              background-color: white;
-              margin-bottom: 2vh;
-          }
-          #paused-title {
-              font-size: 1.2em;
-          }
-          #paused-subtitle {
-              font-size: 0.8em;
-          }
-          #paused-state-pannel > .button-div {
-              /*min-height: 10vh;*/
-              /*display: flex;*/
-              justify-content: center;
-              align-items: center;
-              margin-bottom: 2vh;
-              /*margin-top: 8vh;*/
-          }
-          #paused-state-pannel > .button-div > button {
-              font-size: min(6.4vh, 8vw);
-          }
-          #game-panel > div > button {
-              font-size: var(--unpaused-clock-font-size);
-          }
-          #clocks-container {
-              /*https://stackoverflow.com/questions/9185434/using-svg-as-background-image*/
-              display: grid;
-              --paused-columns-count: 1;
-              --unpaused-columns-count: 1;
-              --columns-count: var(--unpaused-columns-count);
-              --clock-font-size: var(--unpaused-clock-font-size);
-              grid-template-columns: repeat(var(--columns-count), 1fr);
-              column-gap: 2vw;
-              row-gap: 2vh;
-              /*gap: 10px;*/
-              padding-left: 2vw;
-              padding-right: 2vw;
-              padding-top: 2vh;
-              padding-bottom: 2vh;
-              /*padding: 10px;*/
-              background-color: black; /*rgb(100, 100, 100);*/
-          }
-          @media only screen and (min-aspect-ratio: 6/5) {
-              #clocks-container {
-                  --paused-columns-count: 2;
-                  --unpaused-columns-count: 2;
-                  --unpaused-clock-font-size: min(22vh, 10vw);
-                  --paused-clock-font-size: min(8vh, 4vw);
-              }
-              #paused-state-pannel {
-                  min-height: 75vh;
-              }
-          }
-          @media only screen and (min-aspect-ratio: 8/5) {
-              #clocks-container {
-                  --paused-columns-count: 4;
-                  --unpaused-columns-count: 2;
-                  --unpaused-clock-font-size: min(22vh, 10vw);
-                  --paused-clock-font-size: min(8vh, 4vw);
-              }
-              #paused-state-pannel {
-                  min-height: 80vh;
-              }
-          }
-      }
-      #quaternity-clock[data-state="running"] {
-          #keyboard-div {
-              display: block;
-              font-size: var(--unpaused-clock-font-size);
-              background-color: rgba(0, 0, 0, 0.0);
-          }
-          #paused-state-pannel {
-              display: none;
-          }
-          #confirm-terminate-panel-div {
-              display: none;
-          }
-      }
-      #quaternity-clock:not([data-state="running"]) {
-          #clocks-container {
-              --columns-count: var(--paused-columns-count);
-          }
-          #keyboard-div {
-              display: none;
-          }
-      }
-      #quaternity-clock[data-state="paused"] {
-          #remove-player-button-div {
-              display: flex;
-          }
-          #confirm-terminate-panel-div {
-              display: none;
-          }
-      }
-      #quaternity-clock[data-state="removing-player"] {
-          #remove-player-button-div,#confirm-terminate-panel-div {
-              display: none;
-          }
-          #remove-players-div {
-              background-color: white;
-              margin-top: 4vh;
-              margin-bottom: 8vh;
-              display: flex;
-              flex-direction: column;
-          }
-          #remove-players-div input {
-              font-size: 4vh;
-              width: 6vh;
-              height: 12vh;
-          }
-          #remove-players-div > div {
-              /*border: 2px solid black;*/
-              margin-left: 20vw;
-              text-align: left;
-          }
-          @media only screen and (min-aspect-ratio: 6/5) {
-              #remove-players-div {
-                  display: flex;
-                  flex-direction: row;
-                  justify-content: space-between;
-              }
-              #remove-players-div > div {
-                  margin-left: 0vw;
-              }
-          }
-      }
-      #quaternity-clock[data-state="confim-terminate"] {
-          #game-panel {
-              display: none;
-          }
-          #confirm-terminate-panel-div {
-              display: flex;
-              flex-direction: column;
-              font-size: min(12vh, 8vw);
-              justify-content: center;
-              align-items: center;
-              text-align: center;
-              div {
-                  margin-top: 20vh;
-              }
-              @media only screen and (max-aspect-ratio: 8/5) {
-                  div {
-                      margin-top: 10vh;
-                      display: flex;
-                      flex-direction: column;
-                      justify-content: center;
-                      align-items: center;
-                  }
-              }
-              button {
-                  font-size: min(9vh, 6vw);
-                  width: 40vw;
-                  height: 2em;
-                  margin-top: 10vh;
-              }
-          }
-      }
-      #quaternity-clock[data-state="over"] {
-          #new-game-button-div {
-              display: flex;
-          }
-          #confirm-terminate-panel-div {
-              display: none;
-          }
-      }
-      #quaternity-clock:not([data-state="over"]) {
-          #new-game-button-div {
-              display: none;
-          }
-      }
-      #quaternity-clock:not([data-state="running"]) #clocks-container > .player-clock {
-          font-size: var(--paused-clock-font-size);
-      }
-      .when-not-on-fullscreen {
-          display: flex;
-      }
-      .when-on-fullscreen {
-          display: none;
-      }
-      :fullscreen {
-          .when-not-on-fullscreen {
-              display: none;
-          }
-          .when-on-fullscreen {
-              display: flex;
-          }
-      }
-      #clocks-container {
-          .player-clock {
-              color: white;
-              padding: 0.2vh; /*calc(0.2vh + 0.2vw);*/
-              border: calc(0.2vh + 0.2vw) solid grey;
-              font-size: 4vh;
-              text-align: center;
-              align-content: center;
-              font-size: var(--clock-font-size);
-              font-family: monospace;
-          }
-          .player-clock[data-status="current"] {
-              border: calc(0.5vh + 0.5vw) solid lightgray;
-              box-shadow: 0 0 calc(0.6vh + 0.6vw) calc(0.8vh + 0.8vw) #e0f0ff;
-              opacity: 1.0;
-          }
-          .player-clock[data-status="paused"] {
-              /*opacity: 0.68;*/
-          }
-          .player-clock[data-status="disabled"] {
-              opacity: 0.34;
-              text-decoration: line-through;
-          }
-          #player1-div {
-              background-color: white;
-              color: black;
-          }
-          #player2-div {
-              background-color: red;
-          }
-          #player3-div {
-              background-color: black;
-              --player3-column: min(var(--columns-count), 3);        /* 1 2 3 */
-              --player3-row: calc(4 - min(var(--columns-count), 3)); /* 3 2 1 */
-              grid-column: var(--player3-column) / span 1;
-              grid-row: var(--player3-row) / span 1;
-          }
-          #player4-div {
-              background-color: green;
-              --player4-column: calc(1 + 3 * round(down, calc(var(--columns-count) / 4)));/*1 1 4*/
-              --player4-row: calc(4 / var(--columns-count));                              /*4 2 1*/
-              grid-column: var(--player4-column) / span 1;
-              grid-row: var(--player4-row) / span 1;
-          }
-      }
-      #unpause-buttons-container {
-          display: flex;
-          flex-direction: row;
-          justify-content: space-around;
-      }
-      #unpause-buttons-container > div > svg {
-          width: min(20vh, 20vw);
-          height: min(15vh, 20vw);
-      }
-      legend {
-          display: block; /* Treat the legend as a block-level element */
-          width: auto; /* Allow the width to adjust to content, or set a specific width */
-          margin-left: auto;
-          margin-right: auto;
-          /* or shorthand: margin: 0 auto; */
-          text-align: center; /* To center the text within the centered legend */
-      }
+         #start-panel-div {
+             padding-top: 4vh;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             height: 90vh;
+             background-color: white;
+             @media only screen and (aspect-ratio < 2) {
+                 font-size: min(5vh, 6vw);
+             }
+             @media only screen and (2 <= aspect-ratio) {
+                 font-size: 7vh
+             }
+             .time-inputs {
+                 display: flex;
+                 flex-direction: column;
+                 align-items: center;
+                 margin: auto;
+                 fieldset {
+                     width: 90vw;
+                     background-color: beige;
+                     display: flex;
+                     flex-direction: row;
+                     justify-content: space-evenly;
+                     input {
+                         font-size: min(8vh, 7vw);
+                         text-align: right;        
+                         width: 2.4em;
+                         height: 1.2em;
+                     }
+                     @media only screen and (1.6 <= aspect-ratio) {
+                         justify-content: space-between;
+                         legend {
+                             display: none;
+                         }
+                         div.inside-legend {
+                             display: block;
+                         }
+                     }          
+                 }
+                 @media only screen and (4 <= aspect-ratio) {
+                     flex-direction: row;
+                     justify-conten: space-between;
+                     width: 90vw;
+                     fieldset { width: 45vw; }
+                 }
+             }
+             #start-panel-buttons-div {
+                 display: flex;
+                 justify-content: space-between;
+                 width: 90vw;
+                 margin-bottom: 1em;
+                 margin-top: 1em;
+                 button {
+                     height: 2em;
+                     margin-top: 0.5em;
+                 }
+                 @media only screen and (aspect-ratio < 2) {
+                     flex-direction: column;
+                     align-items: center;
+                     button {
+                         font-size: min(7vh, 7vw);
+                         width: 60vw;
+                     }
+                 }
+                 @media only screen and (2 <= aspect-ratio) {
+                     flex-direction: row;
+                     justify-content: space-between;
+                     button {
+                         font-size: 8vh;
+                         width: 40vw;
+                     }
+                 }
+             }
+             #start-button {
+                 background-color: lightgreen;
+                 font-weight: bold;
+                 /*border: calc(0.15vh + 0.15vw) solid black;*/
+             }
+         }
+     }
+     #keyboard-div,#remove-players-div {
+         display: none;
+     }
+     #quaternity-clock:not([data-state="setup"]) {
+         #start-panel-div {
+             display: none;
+         }
+         #game-panel {
+             min-height: 100vh;
+             display: flex;
+             flex-direction: column;
+             align-items: stretch;
+             justify-content: center;
+             text-align: center;
+             --unpaused-clock-font-size: min(12vh, 20vw);
+             --paused-clock-font-size: 3vh;
+             background-color: black;
+         }
+         #paused-state-pannel {
+             font-size: min(8vh, 10vw);
+             background-color: rgb(155, 155, 155);
+             display: flex;
+             flex-direction: column;
+             justify-content: center;
+             padding-left: 2vw;
+             padding-right: 2vw;
+             min-height: 65vh;
+         }
+         #paused-title-div {
+             border: calc(0.2vh + 0.2vw) solid black;
+             background-color: white;
+             margin-bottom: 2vh;
+         }
+         #paused-title {
+             font-size: 1.2em;
+         }
+         #paused-subtitle {
+             font-size: 0.8em;
+         }
+         #paused-state-pannel > .button-div {
+             /*min-height: 10vh;*/
+             /*display: flex;*/
+             justify-content: center;
+             align-items: center;
+             margin-bottom: 2vh;
+             /*margin-top: 8vh;*/
+         }
+         #paused-state-pannel > .button-div > button {
+             font-size: min(6.4vh, 8vw);
+         }
+         #game-panel > div > button {
+             font-size: var(--unpaused-clock-font-size);
+         }
+         #clocks-container {
+             /*https://stackoverflow.com/questions/9185434/using-svg-as-background-image*/
+             display: grid;
+             --paused-columns-count: 1;
+             --unpaused-columns-count: 1;
+             --columns-count: var(--unpaused-columns-count);
+             --clock-font-size: var(--unpaused-clock-font-size);
+             grid-template-columns: repeat(var(--columns-count), 1fr);
+             column-gap: 2vw;
+             row-gap: 2vh;
+             /*gap: 10px;*/
+             padding-left: 2vw;
+             padding-right: 2vw;
+             padding-top: 2vh;
+             padding-bottom: 2vh;
+             /*padding: 10px;*/
+             background-color: black; /*rgb(100, 100, 100);*/
+         }
+         @media only screen and (min-aspect-ratio: 6/5) {
+             #clocks-container {
+                 --paused-columns-count: 2;
+                 --unpaused-columns-count: 2;
+                 --unpaused-clock-font-size: min(22vh, 10vw);
+                 --paused-clock-font-size: min(8vh, 4vw);
+             }
+             #paused-state-pannel {
+                 min-height: 75vh;
+             }
+         }
+         @media only screen and (min-aspect-ratio: 8/5) {
+             #clocks-container {
+                 --paused-columns-count: 4;
+                 --unpaused-columns-count: 2;
+                 --unpaused-clock-font-size: min(22vh, 10vw);
+                 --paused-clock-font-size: min(8vh, 4vw);
+             }
+             #paused-state-pannel {
+                 min-height: 80vh;
+             }
+         }
+     }
+     #quaternity-clock[data-state="running"] {
+         #keyboard-div {
+             display: block;
+             font-size: var(--unpaused-clock-font-size);
+             background-color: rgba(0, 0, 0, 0.0);
+         }
+         #paused-state-pannel {
+             display: none;
+         }
+         #confirm-terminate-panel-div {
+             display: none;
+         }
+     }
+     #quaternity-clock:not([data-state="running"]) {
+         #clocks-container {
+             --columns-count: var(--paused-columns-count);
+         }
+         #keyboard-div {
+             display: none;
+         }
+     }
+     #quaternity-clock[data-state="paused"] {
+         #remove-player-button-div {
+             display: flex;
+         }
+         #confirm-terminate-panel-div {
+             display: none;
+         }
+     }
+     #quaternity-clock[data-state="removing-player"] {
+         #remove-player-button-div,#confirm-terminate-panel-div {
+             display: none;
+         }
+         #remove-players-div {
+             background-color: white;
+             margin-top: 4vh;
+             margin-bottom: 8vh;
+             display: flex;
+             flex-direction: column;
+         }
+         #remove-players-div input {
+             font-size: 4vh;
+             width: 6vh;
+             height: 12vh;
+         }
+         #remove-players-div > div {
+             /*border: 2px solid black;*/
+             margin-left: 20vw;
+             text-align: left;
+         }
+         @media only screen and (min-aspect-ratio: 6/5) {
+             #remove-players-div {
+                 display: flex;
+                 flex-direction: row;
+                 justify-content: space-between;
+             }
+             #remove-players-div > div {
+                 margin-left: 0vw;
+             }
+         }
+     }
+     #quaternity-clock[data-state="confim-terminate"] {
+         #game-panel {
+             display: none;
+         }
+         #confirm-terminate-panel-div {
+             display: flex;
+             flex-direction: column;
+             font-size: min(12vh, 8vw);
+             justify-content: center;
+             align-items: center;
+             text-align: center;
+             div {
+                 margin-top: 20vh;
+             }
+             @media only screen and (max-aspect-ratio: 8/5) {
+                 div {
+                     margin-top: 10vh;
+                     display: flex;
+                     flex-direction: column;
+                     justify-content: center;
+                     align-items: center;
+                 }
+             }
+             button {
+                 font-size: min(9vh, 6vw);
+                 width: 40vw;
+                 height: 2em;
+                 margin-top: 10vh;
+             }
+         }
+     }
+     #quaternity-clock[data-state="over"] {
+         #new-game-button-div {
+             display: flex;
+         }
+         #confirm-terminate-panel-div {
+             display: none;
+         }
+     }
+     #quaternity-clock:not([data-state="over"]) {
+         #new-game-button-div {
+             display: none;
+         }
+     }
+     #quaternity-clock:not([data-state="running"]) #clocks-container > .player-clock {
+         font-size: var(--paused-clock-font-size);
+     }
+     .when-not-on-fullscreen {
+         display: flex;
+     }
+     .when-on-fullscreen {
+         display: none;
+     }
+     :fullscreen {
+         .when-not-on-fullscreen {
+             display: none;
+         }
+         .when-on-fullscreen {
+             display: flex;
+         }
+     }
+     #clocks-container {
+         .player-clock {
+             color: white;
+             padding: 0.2vh; /*calc(0.2vh + 0.2vw);*/
+             border: calc(0.2vh + 0.2vw) solid grey;
+             font-size: 4vh;
+             text-align: center;
+             align-content: center;
+             font-size: var(--clock-font-size);
+             font-family: monospace;
+         }
+         .player-clock[data-status="current"] {
+             border: calc(0.5vh + 0.5vw) solid lightgray;
+             box-shadow: 0 0 calc(0.6vh + 0.6vw) calc(0.8vh + 0.8vw) #e0f0ff;
+             opacity: 1.0;
+         }
+         .player-clock[data-status="paused"] {
+             /*opacity: 0.68;*/
+         }
+         .player-clock[data-status="disabled"] {
+             opacity: 0.34;
+             text-decoration: line-through;
+         }
+         #player1-div {
+             background-color: white;
+             color: black;
+         }
+         #player2-div {
+             background-color: red;
+         }
+         #player3-div {
+             background-color: black;
+             --player3-column: min(var(--columns-count), 3);        /* 1 2 3 */
+             --player3-row: calc(4 - min(var(--columns-count), 3)); /* 3 2 1 */
+             grid-column: var(--player3-column) / span 1;
+             grid-row: var(--player3-row) / span 1;
+         }
+         #player4-div {
+             background-color: green;
+             --player4-column: calc(1 + 3 * round(down, calc(var(--columns-count) / 4)));/*1 1 4*/
+             --player4-row: calc(4 / var(--columns-count));                              /*4 2 1*/
+             grid-column: var(--player4-column) / span 1;
+             grid-row: var(--player4-row) / span 1;
+         }
+     }
+     #unpause-buttons-container {
+         display: flex;
+         flex-direction: row;
+         justify-content: space-around;
+     }
+     #unpause-buttons-container > div > svg {
+         width: min(20vh, 20vw);
+         height: min(15vh, 20vw);
+     }
+     legend {
+         display: block; /* Treat the legend as a block-level element */
+         width: auto; /* Allow the width to adjust to content, or set a specific width */
+         margin-left: auto;
+         margin-right: auto;
+         /* or shorthand: margin: 0 auto; */
+         text-align: center; /* To center the text within the centered legend */
+     }
     </style>
     <script src="quaternity_clock.js"></script>
     <script>
-      const playersNames = ["White", "Red", "Black", "Green"];
-      const regexInteger = /^[0-9]+$/;
-      let game = null;
-      let quaternityClockDiv = null;
+     const playersNames = ["White", "Red", "Black", "Green"];
+     const regexInteger = /^[0-9]+$/;
+     let game = null;
+     let quaternityClockDiv = null;
 
-      const wakelockSupported = 'wakeLock' in navigator;
-      let wakelockPromise = null;
-      let wakelockHandle = null;
-      let wakelockAcquired = false;
+     const wakelockSupported = 'wakeLock' in navigator;
+     let wakelockPromise = null;
+     let wakelockHandle = null;
+     let wakelockAcquired = false;
 
-      function EnterFullscreen() {
-          document.getElementById("quaternity-clock").requestFullscreen();
-      }
+     function EnterFullscreen() {
+         document.getElementById("quaternity-clock").requestFullscreen();
+     }
 
-      function ExitFullscreen() {
-          document.exitFullscreen();
-      }
+     function ExitFullscreen() {
+         document.exitFullscreen();
+     }
 
-      if (wakelockSupported) {
-          document.addEventListener('visibilitychange', HandleVisibilityChange);
-      }
+     if (wakelockSupported) {
+         document.addEventListener('visibilitychange', HandleVisibilityChange);
+     }
 
-      function HandleVisibilityChange() {
-          if (wakelockSupported
-              && GameIsInState("running")
-              && (document.visibilityState === 'visible'))
-          {
-              AcquireWakelock();
-          }
-      }
+     function HandleVisibilityChange() {
+         if (wakelockSupported
+             && GameIsInState("running")
+             && (document.visibilityState === 'visible'))
+         {
+             AcquireWakelock();
+         }
+     }
 
-      function AcquireWakelock() {
-          // see: https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API
+     function AcquireWakelock() {
+         // see: https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API
 
-          if (wakelockSupported
-              && (wakelockHandle === null || wakelockHandle.released)
-              && wakelockPromise === null) {
-              wakelockPromise = navigator.wakeLock.request('screen')
-                  .then(hdl => {
-                      wakelockPromise = null;
-                      wakelockHandle = hdl;
-                  })
-                  .catch(err => {wakelockPromise = null});
-          }
-      }
+         if (wakelockSupported
+             && (wakelockHandle === null || wakelockHandle.released)
+             && wakelockPromise === null) {
+             wakelockPromise = navigator.wakeLock.request('screen')
+                                        .then(hdl => {
+                                            wakelockPromise = null;
+                                            wakelockHandle = hdl;
+                                        })
+                                        .catch(err => {wakelockPromise = null});
+         }
+     }
 
-      function ReleaseWakelock() {
-          if (wakelockHandle && !wakelockHandle.released) {
-              wakelockHandle.release();
-          }
-      }
+     function ReleaseWakelock() {
+         if (wakelockHandle && !wakelockHandle.released) {
+             wakelockHandle.release();
+         }
+     }
 
-      function SetGameState(stateName) {
-          if (quaternityClockDiv === null) {
-              quaternityClockDiv = document.getElementById("quaternity-clock");
-          }
-          if (quaternityClockDiv !== null) {
-              if (stateName !== quaternityClockDiv.dataset.state) {
-                  quaternityClockDiv.dataset.state = stateName;
-                  if (stateName === "running") {
-                      AcquireWakelock();
-                  } else {
-                      ReleaseWakelock();
-                  }
-              }
-          }
-      }
+     function SetGameState(stateName) {
+         if (quaternityClockDiv === null) {
+             quaternityClockDiv = document.getElementById("quaternity-clock");
+         }
+         if (quaternityClockDiv !== null) {
+             if (stateName !== quaternityClockDiv.dataset.state) {
+                 quaternityClockDiv.dataset.state = stateName;
+                 if (stateName === "running") {
+                     AcquireWakelock();
+                 } else {
+                     ReleaseWakelock();
+                 }
+             }
+         }
+     }
 
-      function GameIsInState(stateName) {
-          if (quaternityClockDiv !== null) {
-              return quaternityClockDiv.dataset.state === stateName;
-          }
-          return false;
-      }
+     function GameIsInState(stateName) {
+         if (quaternityClockDiv !== null) {
+             return quaternityClockDiv.dataset.state === stateName;
+         }
+         return false;
+     }
 
-      function GotoPausedStateUI(title, subtitle, playersAvailableForUnpausing) {
-          SetGameState("paused");
-          document.getElementById("terminate-game-button-div").style.display = "flex";
-          document.getElementById("remove-player-button-div").style.display = "flex";
-          document.getElementById("new-game-button-div").style.display = "none";
-          SetPausedPanelTitle(title, subtitle);
-          EnableUnpauseButtons(playersAvailableForUnpausing);
-      }
-      function SetPausedPanelTitle(title, subtitle) {
-          document.getElementById("paused-title").textContent = title
-          document.getElementById("paused-subtitle").textContent = subtitle;
-      }
+     function GotoPausedStateUI(title, subtitle, playersAvailableForUnpausing) {
+         SetGameState("paused");
+         document.getElementById("terminate-game-button-div").style.display = "flex";
+         document.getElementById("remove-player-button-div").style.display = "flex";
+         document.getElementById("new-game-button-div").style.display = "none";
+         SetPausedPanelTitle(title, subtitle);
+         EnableUnpauseButtons(playersAvailableForUnpausing);
+     }
+     function SetPausedPanelTitle(title, subtitle) {
+         document.getElementById("paused-title").textContent = title
+         document.getElementById("paused-subtitle").textContent = subtitle;
+     }
 
-      function EnableUnpauseButtons(players) {
-          if (players.length === 0) {
-              document.getElementById("unpause-buttons-div").style.display = "none";
-          } else {
-              document.getElementById("unpause-buttons-div").style.display = "flex";
-              let positions = Array(4).fill(-1);
-              for (const idx in players) {
-                  positions[players[idx]] = idx;
-              }
-              const unpauseButtonDivs = [
-                  "unpause-white-div",
-                  "unpause-red-div",
-                  "unpause-black-div",
-                  "unpause-green-div" ];
-              for (const idx in positions) {
-                  const divElem = document.getElementById(unpauseButtonDivs[idx]);
-                  if (positions[idx] >= 0) {
-                      divElem.style.display = "block";
-                      divElem.style.order =  positions[idx];
-                  } else {
-                      divElem.style.display = "none";
-                  }
-              }
-          }
-      }
+     function EnableUnpauseButtons(players) {
+         if (players.length === 0) {
+             document.getElementById("unpause-buttons-div").style.display = "none";
+         } else {
+             document.getElementById("unpause-buttons-div").style.display = "flex";
+             let positions = Array(4).fill(-1);
+             for (const idx in players) {
+                 positions[players[idx]] = idx;
+             }
+             const unpauseButtonDivs = [
+                 "unpause-white-div",
+                 "unpause-red-div",
+                 "unpause-black-div",
+                 "unpause-green-div" ];
+             for (const idx in positions) {
+                 const divElem = document.getElementById(unpauseButtonDivs[idx]);
+                 if (positions[idx] >= 0) {
+                     divElem.style.display = "block";
+                     divElem.style.order =  positions[idx];
+                 } else {
+                     divElem.style.display = "none";
+                 }
+             }
+         }
+     }
 
-      function GotoUnpausedStateUI () {
-          SetGameState("running");
-      }
+     function GotoUnpausedStateUI () {
+         SetGameState("running");
+     }
 
-      const checkboxesIds = ["remove-p0-checkbox", "remove-p1-checkbox",
-                             "remove-p2-checkbox", "remove-p3-checkbox"];
+     const checkboxesIds = ["remove-p0-checkbox", "remove-p1-checkbox",
+                            "remove-p2-checkbox", "remove-p3-checkbox"];
 
-      function OpenRemovePlayerPanel() {
-          SetGameState("removing-player");
-          document.getElementById("paused-title").textContent = "Remove Player(s)";
-          document.getElementById("terminate-game-button-div").style.display = "none";
-          document.getElementById("remove-player-button-div").style.display = "none";
+     function OpenRemovePlayerPanel() {
+         SetGameState("removing-player");
+         document.getElementById("paused-title").textContent = "Remove Player(s)";
+         document.getElementById("terminate-game-button-div").style.display = "none";
+         document.getElementById("remove-player-button-div").style.display = "none";
 
-          const divs = ["remove-player0-div", "remove-player1-div",
-                        "remove-player2-div", "remove-player3-div"];
+         const divs = ["remove-player0-div", "remove-player1-div",
+                       "remove-player2-div", "remove-player3-div"];
 
-          for (const i in divs) {
-              const div = document.getElementById(divs[i]);
-              div.style.display = game.IsPlayerActive(i) ? "block" : "none";
-              document.getElementById(checkboxesIds[i]).checked = false;
-          }
-      }
+         for (const i in divs) {
+             const div = document.getElementById(divs[i]);
+             div.style.display = game.IsPlayerActive(i) ? "block" : "none";
+             document.getElementById(checkboxesIds[i]).checked = false;
+         }
+     }
 
-      function OnChangeOfRemovePlayerCheckbox(idx) {
-          const checked = document.getElementById(checkboxesIds[idx]).checked;
-          const playersForUnpausing = checked ? game.DisablePlayer(idx) : game.ReEnablePlayer(idx);
-          EnableUnpauseButtons(playersForUnpausing);
-          document.getElementById("terminate-game-button-div").style.display =
-              playersForUnpausing.length === 0 ? "flex" : "none";
-      }
-      function Pause() {
-          if (game) {
-              game.Pause();
-          }
-      }
-      function Unpause(playerIdx) {
-          if (game) {
-              game.Unpause(playerIdx);
-          }
-      }
-      function OnPlayerButtonClick(playerId) {
-          if (game) {
-              game.OnPlayerButtonPressed(playerId);
-          }
-      }
-      function OnKeyDown(ev) {
-            if (event.key === 'a' || event.key === 'A') {
-                OnPlayerButtonClick(0);
-            } else if (event.key === 'b' || event.key === 'B') {
-                OnPlayerButtonClick(1);
-            } else if (event.key === 'c' || event.key === 'C') {
-                OnPlayerButtonClick(2);
-            } else if (event.key === 'd' || event.key === 'D') {
-                OnPlayerButtonClick(3);
-            }
-      };
-      function PromptTerminateGame() {
-          SetGameState("confim-terminate");
-      }
-      function StartNewGame() {
-          SetGameState("setup");
-          //document.getElementById("start-panel-div").style.display = "flex";
-          game = null;
-      }
-      class UI {
-          constructor() {
-              this.playersClocksDivs = [
-                  document.getElementById("player1-div"),
-                  document.getElementById("player2-div"),
-                  document.getElementById("player3-div"),
-                  document.getElementById("player4-div")
-              ];
-              for (const i in this.playersClocksDivs) {
-                  this.EnablePlayer(i);
-              }
-          }
-          AlertRunning(str) {
-              GotoUnpausedStateUI();
-          }
-          AlertPause(playersAvailableForUnpausing) {
-              GotoPausedStateUI("GAME PAUSED", "", playersAvailableForUnpausing);
-          }
-          SetPlayersAvailabeForUnpausing(players) {
-              EnableUnpauseButtons(players);
-          }
-          AlertPlayerLostByTime(playerId, nextPlayerArr) {
-              this.DisablePlayer(playerId);
-              const subtitle = `${playersNames[playerId]} lost by timeout`;
-              if (nextPlayerArr && nextPlayerArr.length !== 0) {
-                  GotoPausedStateUI("GAME PAUSED", subtitle, nextPlayerArr);
-              } else {
-                  this.AlertGameOver(subtitle);
-              }
-          }
-          AlertGameOver(subtitle) {
-              SetGameState("over");
-              SetPausedPanelTitle("GAME OVER", subtitle);
-              document.getElementById("new-game-button-div").style.display = "flex";
-              document.getElementById("unpause-buttons-div").style.display = "none";
-              document.getElementById("remove-player-button-div").style.display = "none";
-              document.getElementById("terminate-game-button-div").style.display = "none";
-              game = null;
-          }
-          SetPlayerStatus(playerId, s)
-          {
-              this.playersClocksDivs[playerId].dataset.status = s;
-          }
-          HighlightPlayer(playerId) {
-              this.SetPlayerStatus(playerId, "current");
-          }
-          UnhighlightPlayer(playerId) {
-              this.SetPlayerStatus(playerId, "paused");
-          }
-          DisablePlayer(playerId) {
-              this.SetPlayerStatus(playerId, "disabled");
-          }
-          EnablePlayer(playerId) {
-              this.SetPlayerStatus(playerId, "paused");
-          }
-          UpdatePlayerRemainingTime(playerId, remainingTime_ms) {
-              let seconds_sum = Math.ceil(remainingTime_ms / 1000.0);
-              let minutes_sum = Math.floor(seconds_sum / 60.0);
-              let hours = Math.floor(minutes_sum / 60.0);
-              let seconds = seconds_sum - minutes_sum * 60.0;
-              let minutes = minutes_sum - hours * 60.0;
-              let minutesStr = minutes >= 10 ? `${minutes}` : `0${minutes}`;
-              let secondsStr = seconds >= 10 ? `${seconds}` : `0${seconds}`;
+     function OnChangeOfRemovePlayerCheckbox(idx) {
+         const checked = document.getElementById(checkboxesIds[idx]).checked;
+         const playersForUnpausing = checked ? game.DisablePlayer(idx) : game.ReEnablePlayer(idx);
+         EnableUnpauseButtons(playersForUnpausing);
+         document.getElementById("terminate-game-button-div").style.display =
+             playersForUnpausing.length === 0 ? "flex" : "none";
+     }
+     function Pause() {
+         if (game) {
+             game.Pause();
+         }
+     }
+     function Unpause(playerIdx) {
+         if (game) {
+             game.Unpause(playerIdx);
+         }
+     }
+     function OnPlayerButtonClick(playerId) {
+         if (game) {
+             game.OnPlayerButtonPressed(playerId);
+         }
+     }
+     function OnKeyDown(ev) {
+         if (event.key === 'a' || event.key === 'A') {
+             OnPlayerButtonClick(0);
+         } else if (event.key === 'b' || event.key === 'B') {
+             OnPlayerButtonClick(1);
+         } else if (event.key === 'c' || event.key === 'C') {
+             OnPlayerButtonClick(2);
+         } else if (event.key === 'd' || event.key === 'D') {
+             OnPlayerButtonClick(3);
+         }
+     };
+     function PromptTerminateGame() {
+         SetGameState("confim-terminate");
+     }
+     function StartNewGame() {
+         SetGameState("setup");
+         //document.getElementById("start-panel-div").style.display = "flex";
+         game = null;
+     }
+     class UI {
+         constructor() {
+             this.playersClocksDivs = [
+                 document.getElementById("player1-div"),
+                 document.getElementById("player2-div"),
+                 document.getElementById("player3-div"),
+                 document.getElementById("player4-div")
+             ];
+             for (const i in this.playersClocksDivs) {
+                 this.EnablePlayer(i);
+             }
+         }
+         AlertRunning(str) {
+             GotoUnpausedStateUI();
+         }
+         AlertPause(playersAvailableForUnpausing) {
+             GotoPausedStateUI("GAME PAUSED", "", playersAvailableForUnpausing);
+         }
+         SetPlayersAvailabeForUnpausing(players) {
+             EnableUnpauseButtons(players);
+         }
+         AlertPlayerLostByTime(playerId, nextPlayerArr) {
+             this.DisablePlayer(playerId);
+             const subtitle = `${playersNames[playerId]} lost by timeout`;
+             if (nextPlayerArr && nextPlayerArr.length !== 0) {
+                 GotoPausedStateUI("GAME PAUSED", subtitle, nextPlayerArr);
+             } else {
+                 this.AlertGameOver(subtitle);
+             }
+         }
+         AlertGameOver(subtitle) {
+             SetGameState("over");
+             SetPausedPanelTitle("GAME OVER", subtitle);
+             document.getElementById("new-game-button-div").style.display = "flex";
+             document.getElementById("unpause-buttons-div").style.display = "none";
+             document.getElementById("remove-player-button-div").style.display = "none";
+             document.getElementById("terminate-game-button-div").style.display = "none";
+             game = null;
+         }
+         SetPlayerStatus(playerId, s)
+         {
+             this.playersClocksDivs[playerId].dataset.status = s;
+         }
+         HighlightPlayer(playerId) {
+             this.SetPlayerStatus(playerId, "current");
+         }
+         UnhighlightPlayer(playerId) {
+             this.SetPlayerStatus(playerId, "paused");
+         }
+         DisablePlayer(playerId) {
+             this.SetPlayerStatus(playerId, "disabled");
+         }
+         EnablePlayer(playerId) {
+             this.SetPlayerStatus(playerId, "paused");
+         }
+         UpdatePlayerRemainingTime(playerId, remainingTime_ms) {
+             let seconds_sum = Math.ceil(remainingTime_ms / 1000.0);
+             let minutes_sum = Math.floor(seconds_sum / 60.0);
+             let hours = Math.floor(minutes_sum / 60.0);
+             let seconds = seconds_sum - minutes_sum * 60.0;
+             let minutes = minutes_sum - hours * 60.0;
+             let minutesStr = minutes >= 10 ? `${minutes}` : `0${minutes}`;
+             let secondsStr = seconds >= 10 ? `${seconds}` : `0${seconds}`;
 
-              this.playersClocksDivs[playerId].textContent =
-                  `${hours}:${minutesStr}:${secondsStr}`;
-          }
-      }
+             this.playersClocksDivs[playerId].textContent =
+                 `${hours}:${minutesStr}:${secondsStr}`;
+         }
+     }
 
-      function Start() {
-          let minutesStr =  document.getElementById("minutes").value;
-          let secondsStr =  document.getElementById("seconds").value;
-          let addSecsStr = document.getElementById("addSecondsEachMove").value;
-          if (regexInteger.test(minutesStr) &&
-              regexInteger.test(secondsStr) &&
-              regexInteger.test(addSecsStr))
-          {
-              let minutes = parseInt(minutesStr);
-              let seconds = parseInt(secondsStr) + minutes * 60;
-              let addSecs = parseInt(addSecsStr);
-              if (seconds > 0) {
-                  DoStart(seconds, addSecs);
-                  return;
-              }
-          }
-          document.getElementById("start-panel-error").textContent = "Invalid Input";
-      }
-      function DoStart(time_sec, addSecs) {
-          SetGameState("running");
-          const players = [
-              new QuaternityPlayerClockDisplay(time_sec, addSecs),
-              new QuaternityPlayerClockDisplay(time_sec, addSecs),
-              new QuaternityPlayerClockDisplay(time_sec, addSecs),
-              new QuaternityPlayerClockDisplay(time_sec, addSecs)
-          ];
-          const ui = new UI();
-          for (const i in players) {
-              ui.UpdatePlayerRemainingTime(i, players[i].RemainingTime_ms())
-          }
-          game = new QuaternityGameClock(players, ui);
-          playBeep(1);
-          game.Unpause(0);
-          GotoUnpausedStateUI();
-      }
-      document.addEventListener('keydown', OnKeyDown);
+     function Start() {
+         let minutesStr =  document.getElementById("minutes").value;
+         let secondsStr =  document.getElementById("seconds").value;
+         let addSecsStr = document.getElementById("addSecondsEachMove").value;
+         if (regexInteger.test(minutesStr) &&
+             regexInteger.test(secondsStr) &&
+             regexInteger.test(addSecsStr))
+         {
+             let minutes = parseInt(minutesStr);
+             let seconds = parseInt(secondsStr) + minutes * 60;
+             let addSecs = parseInt(addSecsStr);
+             if (seconds > 0) {
+                 DoStart(seconds, addSecs);
+                 return;
+             }
+         }
+         document.getElementById("start-panel-error").textContent = "Invalid Input";
+     }
+     function DoStart(time_sec, addSecs) {
+         SetGameState("running");
+         const players = [
+             new QuaternityPlayerClockDisplay(time_sec, addSecs),
+             new QuaternityPlayerClockDisplay(time_sec, addSecs),
+             new QuaternityPlayerClockDisplay(time_sec, addSecs),
+             new QuaternityPlayerClockDisplay(time_sec, addSecs)
+         ];
+         const ui = new UI();
+         for (const i in players) {
+             ui.UpdatePlayerRemainingTime(i, players[i].RemainingTime_ms())
+         }
+         game = new QuaternityGameClock(players, ui);
+         playBeep(1);
+         game.Unpause(0);
+         GotoUnpausedStateUI();
+     }
+     document.addEventListener('keydown', OnKeyDown);
     </script>
   </head>
   <body>
@@ -689,17 +689,17 @@
               <legend>
                 Time per player:
               </legend>
-          <div class="inside-legend">
-            Time per player:
-          </div>
-          <div>
-            <input id="minutes" type="number" min="0" max="9999" value="12">
-            min
-          </div>
-          <div>
-          <input id="seconds" type="number" min="0" max="59"  value="00">
-          sec
-          </div>
+              <div class="inside-legend">
+                Time per player:
+              </div>
+              <div>
+                <input id="minutes" type="number" min="0" max="9999" value="12">
+                min
+              </div>
+              <div>
+                <input id="seconds" type="number" min="0" max="59"  value="00">
+                sec
+              </div>
             </fieldset>
           </div>
           <div>
@@ -707,13 +707,13 @@
               <legend>
                 Extra per move:
               </legend>
-          <div class="inside-legend">
-        Extra per move:
-          </div>
-          <div>
-        <input id="addSecondsEachMove" type="number" min="0" max="59" step="1" value="5">
-        sec
-          </div>
+              <div class="inside-legend">
+                Extra per move:
+              </div>
+              <div>
+                <input id="addSecondsEachMove" type="number" min="0" max="59" step="1" value="5">
+                sec
+              </div>
             </fieldset>
           </div>
         </div>
@@ -744,12 +744,12 @@
       <div id="confirm-terminate-panel-div">
         <div>Terminate game?</div>
         <div>
-        <button onclick="SetGameState('paused')">
-          Cancel
-        </button>
-        <button onclick="StartNewGame()">
-          Terminate
-        </button>
+          <button onclick="SetGameState('paused')">
+            Cancel
+          </button>
+          <button onclick="StartNewGame()">
+            Terminate
+          </button>
         </div>
       </div>
       <div id="game-panel">
@@ -920,5 +920,5 @@
       </div>
     </div>
   </body>
-<html>
+  <html>
 
