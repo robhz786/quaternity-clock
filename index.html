@@ -7,7 +7,7 @@
          margin: 0;
          box-sizing: border-box;
      }
-     
+
      /*https://stackoverflow.com/questions/3790935/can-i-hide-the-html5-number-input-s-spin-box*/
      input::-webkit-outer-spin-button,
      input::-webkit-inner-spin-button {
@@ -59,7 +59,7 @@
                      justify-content: space-evenly;
                      input {
                          font-size: min(8vh, 7vw);
-                         text-align: right;        
+                         text-align: right;
                          width: 2.4em;
                          height: 1.2em;
                      }
@@ -71,7 +71,7 @@
                          div.inside-legend {
                              display: block;
                          }
-                     }          
+                     }
                  }
                  @media only screen and (4 <= aspect-ratio) {
                      flex-direction: row;
@@ -404,6 +404,16 @@
      let wakelockPromise = null;
      let wakelockHandle = null;
      let wakelockAcquired = false;
+//     let gamepad = null;
+//
+//     function OnGamepadConnected(e) {
+//         gamepad = e.gamepad;
+//     }
+//     function OnGamepadDisconnected(e) {
+//         gamepad = null;
+//     }
+//     window.addEventListener("gamepadconnected",    OnGamepadConnected);
+//     window.addEventListener("gamepaddisconnected", OnGamepadDisconnected);
 
      function EnterFullscreen() {
          document.getElementById("quaternity-clock").requestFullscreen();
@@ -549,22 +559,6 @@
              game.Unpause(playerIdx);
          }
      }
-     function OnPlayerButtonClick(playerId) {
-         if (game) {
-             game.OnPlayerButtonPressed(playerId);
-         }
-     }
-     function OnKeyDown(ev) {
-         if (event.key === 'a' || event.key === 'A') {
-             OnPlayerButtonClick(0);
-         } else if (event.key === 'b' || event.key === 'B') {
-             OnPlayerButtonClick(1);
-         } else if (event.key === 'c' || event.key === 'C') {
-             OnPlayerButtonClick(2);
-         } else if (event.key === 'd' || event.key === 'D') {
-             OnPlayerButtonClick(3);
-         }
-     };
      function PromptTerminateGame() {
          SetGameState("confim-terminate");
      }
@@ -640,9 +634,27 @@
              this.playersClocksDivs[playerId].textContent =
                  `${hours}:${minutesStr}:${secondsStr}`;
          }
+         SetPlayerRemainingTimeToZero(playerId) {
+             this.playersClocksDivs[playerId].textContent = "00:00:00";
+         }
+     }
+
+     function GetFirstGamepad() {
+         const gamepads = navigator.getGamepads();
+         if (gamepads != null && gamepads[0] != null) {
+             return gamepads[0];
+         }
+         return null;
      }
 
      function Start() {
+//         const gp = GetFirstGamepad();
+//         if (gp === null) {
+//             document.getElementById("start-panel-error").textContent
+//             = "gamepad not conected";
+//             return;
+//         }
+
          let minutesStr =  document.getElementById("minutes").value;
          let secondsStr =  document.getElementById("seconds").value;
          let addSecsStr = document.getElementById("addSecondsEachMove").value;
@@ -660,6 +672,7 @@
          }
          document.getElementById("start-panel-error").textContent = "Invalid Input";
      }
+
      function DoStart(time_sec, addSecs) {
          SetGameState("running");
          const players = [
@@ -672,12 +685,11 @@
          for (const i in players) {
              ui.UpdatePlayerRemainingTime(i, players[i].RemainingTime_ms())
          }
-         game = new QuaternityGameClock(players, ui);
+         game = new QuaternityClock(players, ui);
          playBeep(1);
          game.Unpause(0);
          GotoUnpausedStateUI();
      }
-     document.addEventListener('keydown', OnKeyDown);
     </script>
   </head>
   <body>

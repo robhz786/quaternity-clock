@@ -18,8 +18,8 @@ function playBeep(duration_sec) {
 class QuaternityPlayerClockDisplay {
     constructor(time_sec, additionPerRound_sec) {
         this.onGame = true;
-        this._remainingTime_ms = time_sec * 1000;
-        this._additionPerRound_ms = additionPerRound_sec * 1000;
+        this._remainingTime_ms = time_sec * 1000.0;
+        this._additionPerRound_ms = additionPerRound_sec * 1000.0;
     }
 
     RemainingTime_ms() {
@@ -42,100 +42,106 @@ class QuaternityPlayerClockDisplay {
     }
 }
 
-
-// function CountActivePlayers(players) {
-//     let count = 0;
-//     for (let p of players) {
-//         if (p.onGame) {
-//             count++;
-//         }
-//     }
-//     return count;
-// }
-
-class QuaternityGameClock {
+class QuaternityClock {
     constructor(players, statusUI) {
-        this._ui = statusUI;
-        this._gamePaused = true;
-        this._gameOver = false;
-        this._activePlayersCount = 4 ;
         this._players = players;
+        this._ui = statusUI;
         for (let i in this._players) {
             this._players[i].onGame = true;
             this._ui.UnhighlightPlayer(i);
         }
+        this._ui.HighlightPlayer(0);
+
+        this._activePlayersCount = 4 ;
         this._currentPlayerIdx = 0;
         this._currentPlayer = this._players[0];
-        this._ui.HighlightPlayer(0);
-        this._lastTimePick = 0;
-        this._intervalId = setInterval((self)=>{self._IntervalCallback(); }, 125, this);
+
+        this._previousTimestamp = 0;
+        this._thresholdTimestamp = 0.0;
+        this._ThresholdTimeCallback = null;
     }
 
-    _IntervalCallback() {
-        if (this._gameOver) {
-            this.CleanUp();
-        } else if (!this._gamePaused) {
-            if (this._currentPlayer !== undefined) {
-                let elapsed = this._PickElapsedTime();
-                let remainingTime_ms = this._currentPlayer.SubtractTime(elapsed);
-                this._ui.UpdatePlayerRemainingTime(this._currentPlayerIdx, remainingTime_ms);
-                if (remainingTime_ms <= 0) {
-                    this._OnCurrentPlayerTimeOut();
-                }
-            }
+    _RequestAnimationFrame()
+    {
+        const cb = (timestamp) => { this._AnimNewFrameCallback(timestamp); };
+        window.requestAnimationFrame(cb);
+    }
+
+    _AnimNewFrameCallback(timestamp) {
+        if (timestamp >= this._thresholdTimestamp) {
+            this._ThresholdTimeCallback(timestamp);
+        } else if (this._IsCurrentPlayerButtonPressed()) {
+            this._OnPlayerButtonPressed(timestamp);
+        } else {
+            this._RequestAnimationFrame();
         }
     }
 
-    CleanUp() {
-        if (this._intervalId >= 0) {
-            clearInterval(this._intervalId);
-            this._intervalId = -1;
-        }
-    }
+    _IsCurrentPlayerButtonPressed() {
+         const gamepadsArray = navigator.getGamepads();
+         if (gamepadsArray != null) {
+             const gamepad = gamepadsArray[0];
+             if (gamepad != null) {
+                 const buttons = gamepad.buttons;
+                 const playerIdx = this._currentPlayerIdx;
+                 return ( (playerIdx == 0 && buttons[14].pressed) ||
+                          (playerIdx == 1 && buttons[12].pressed) ||
+                          (playerIdx == 2 && buttons[15].pressed) ||
+                          (playerIdx == 3 && buttons[13].pressed) );
+             }
+         }
+         return false;
+     }
 
-    SwitchPauseState() {
-        if (!this._gameOver) {
-            if (this._gamePaused) {
-                this.Unpause();
-            } else {
-                this.Pause();
-            }
-        }
+    _OnPlayerButtonPressed(timestamp) {
+        const remainingTime = this._currentPlayer.OnMoveDone(timestamp - this._previousTimestamp);
+        this._ui.UpdatePlayerRemainingTime(this._currentPlayerIdx, remainingTime);
+        this._MoveToNextPlayer();
+
+        this._Run(timestamp);
     }
 
     Pause() {
-        if (!this._gamePaused && !this._gameOver) {
-            if (this._currentPlayer.SubtractTime(this._PickElapsedTime())) {
-                this._gamePaused = true;
-                let nextPlayerIdx = this.NextActivePlayerIdx(this._currentPlayerIdx);
-                this._ui.AlertPause([this._currentPlayerIdx, nextPlayerIdx]);
-            } else {
-                this._OnCurrentPlayerTimeOut();
-            }
+        this._thresholdTimestamp = 0;
+        this._ThresholdTimeCallback = (timestamp)=>{ this._DoPause(timestamp) };
+    }
+
+    _DoPause(timestamp) {
+        const elapsedTime = timestamp - this._previousTimestamp;
+        const remainingTime = this._currentPlayer.SubtractTime(elapsedTime);
+        if (remainingTime <= 0.0) {
+            this._OnCurrentPlayerTimeOut();
+        } else {
+            //this._ui.UpdatePlayerRemainingTime(this._currentPlayerIdx, remainingTime_ms);
+            let nextPlayerIdx = this.NextActivePlayerIdx(this._currentPlayerIdx);
+            this._ui.AlertPause([this._currentPlayerIdx, nextPlayerIdx]);
         }
     }
 
     Unpause(playerIdx) {
-        if (this._gamePaused && !this._gameOver && this._players[playerIdx].onGame) {
-            if (playerIdx != this._currentPlayerIdx) {
-                if (this._currentPlayer.onGame) {
-                    // to add the extra time per move:
-                    const remainingTime_ms = this._currentPlayer.OnMoveDone(0);
-                    this._ui.UpdatePlayerRemainingTime(this._currentPlayerIdx, remainingTime_ms);
-                }
-                this._SwitchToPlayer(playerIdx)
+        if (playerIdx != this._currentPlayerIdx) {
+            if (this._currentPlayer.onGame) {
+                // add the extra time per move:
+                const remainingTime_ms = this._currentPlayer.OnMoveDone(0);
+                this._ui.UpdatePlayerRemainingTime(this._currentPlayerIdx, remainingTime_ms);
             }
-            this._gamePaused = false;
-            this._ui.AlertRunning();
-            this._lastTimePick = performance.now();
+            this._SwitchToPlayer(playerIdx)
         }
+        this.UnpauseOnCurrentPlayer();
+    }
+
+    UnpauseOnCurrentPlayer() {
+        this._ui.AlertRunning();
+        this._thresholdTimestamp = 0;
+        this._ThresholdTimeCallback = (timestamp)=>{ this._Run(timestamp)};
+        this._RequestAnimationFrame();
     }
 
     DisablePlayer(idx) {
-        if (this._gamePaused && !this._gameOver && 0 <= idx && idx < this._players.length) {
+        if (0 <= idx && idx < this._players.length) {
             if (this._players[idx].onGame) {
                 this._players[idx].onGame = false;
-                this._activePlayersCount--;
+                --this._activePlayersCount;
                 this._ui.DisablePlayer(idx);
             }
             return this._PlayersAvailableForUnpausing();
@@ -144,23 +150,24 @@ class QuaternityGameClock {
     }
 
     ReEnablePlayer(idx) {
-        if (this._gamePaused && !this._gameOver && 0 <= idx && idx < this._players.length) {
-            if ( ! this._players[idx].onGame) {
+        if (0 <= idx && idx < this._players.length) {
+            if (!this._players[idx].onGame) {
                 this._players[idx].onGame = true;
                 ++this._activePlayersCount;
                 if (idx == this._currentPlayerIdx) {
                     this._ui.HighlightPlayer(idx);
                 } else {
-                    this._ui.EnablePlayer(idx);
+                    this._ui.UnhighlightPlayer(idx);
                 }
             }
             return this._PlayersAvailableForUnpausing();
         }
+        return [];
     }
 
     _PlayersAvailableForUnpausing() {
         if (this._activePlayersCount >= 2) {
-            const nextPlayerIdx = this.NextActivePlayerIdx(this._currentPlayerIdx)
+            const nextPlayerIdx = this.NextActivePlayerIdx(this._currentPlayerIdx);
             if (this._currentPlayer.onGame) {
                 return [this._currentPlayerIdx, nextPlayerIdx];
             }
@@ -169,47 +176,57 @@ class QuaternityGameClock {
         return [];
     }
 
-    OnPlayerButtonPressed(buttonIdx) {
-        if (! this._gamePaused && !this._gameOver && buttonIdx == this._currentPlayerIdx) {
-            const remainingTime_ms = this._currentPlayer.OnMoveDone(this._PickElapsedTime());
-            this._ui.UpdatePlayerRemainingTime(this._currentPlayerIdx, remainingTime_ms);
-            if (remainingTime_ms > 0) {
-                this._MoveToNextPlayer();
-            } else {
-                this._OnCurrentPlayerTimeOut();
-            }
+    _WhenCurrentPlayerDisplayedTimeMustBeIncremented(timestamp) {
+        let elapsedTime = timestamp - this._previousTimestamp;
+        this._previousTimestamp = timestamp;
+        console.debug("----------------------------------------------------");
+        console.debug("player[%d] time before = %f ms",
+                      this._currentPlayerIdx,
+                      this._currentPlayer.RemainingTime_ms());
+        const remainingTime_ms = this._currentPlayer.SubtractTime(elapsedTime);
+        console.debug("player[%d] time after = %f", this._currentPlayerIdx, remainingTime_ms);
+
+        if (remainingTime_ms <= 0) {
+            this._OnCurrentPlayerTimeOut();
+            return;
         }
+        this._ui.UpdatePlayerRemainingTime(this._currentPlayerIdx, remainingTime_ms);
+        this._Run(timestamp);
     }
 
-    _PickElapsedTime() {
-        let now = performance.now();
-        let elapsedTime_ms = now - this._lastTimePick;
-        this._lastTimePick = now;
-        return elapsedTime_ms;
+    _Run(timestamp) {
+        this._previousTimestamp = timestamp;
+        this._thresholdTimestamp = timestamp + this._HowLongToUpdateCurrentPlayerTimeAgain();
+        this._ThresholdTimeCallback =
+            (timestamp)=>{ this._WhenCurrentPlayerDisplayedTimeMustBeIncremented(timestamp) };
+        this._RequestAnimationFrame();
+    }
+
+    _HowLongToUpdateCurrentPlayerTimeAgain() {
+        const remainingTime_ms = this._currentPlayer.RemainingTime_ms();
+        if (remainingTime_ms <= 1000.0) {
+            return remainingTime_ms;
+        }
+        const d = remainingTime_ms - 1000.0 * Math.ceil(remainingTime_ms * 0.001 - 1.0);
+        return d + 0.1;
     }
 
     _OnCurrentPlayerTimeOut() {
         playBeep(1.0);
+        this._ui.SetPlayerRemainingTimeToZero(this._currentPlayerIdx);
         this._currentPlayer.onGame = false;
         this._activePlayersCount--;
         if (this._activePlayersCount <= 1) {
-            this._gameOver = true;
+            //this._gameOver = true;
             this._ui.AlertPlayerLostByTime(this._currentPlayerIdx, []);
         } else {
-            this._gamePaused = true;
+            //this._gamePaused = true;
             let playerOutIdx = this._currentPlayerIdx;
             this._MoveToNextPlayer();
             let nextPlayerIdx = this._currentPlayerIdx;
             this._ui.AlertPlayerLostByTime(playerOutIdx, [nextPlayerIdx]);
         }
     }
-
-//    _OnPlayerRemoved() {
-//        this._activePlayersCount--;
-//        if (this._activePlayersCount <= 1) {
-//            this._ui.AlertGameOver();
-//        }
-//    }
 
     _MoveToNextPlayer() {
         this._SwitchToPlayer(this.NextActivePlayerIdx(this._currentPlayerIdx));
@@ -224,9 +241,9 @@ class QuaternityGameClock {
         this._currentPlayerIdx = playerIdx;
         this._currentPlayer = this._players[this._currentPlayerIdx];
         this._ui.HighlightPlayer(this._currentPlayerIdx);
-        if (this._currentPlayer.RemainingTime_ms() == 0) {
-            _OnCurrentPlayerTimeOut();
-        }
+        // if (this._currentPlayer.RemainingTime_ms() == 0) {
+        //     this._OnCurrentPlayerTimeOut();
+        // }
     }
 
     NextActivePlayerIdx(idx) {
@@ -246,4 +263,5 @@ class QuaternityGameClock {
     IsPlayerActive(idx) {
         return this._players[idx].onGame;
     }
-}
+};
+
