@@ -217,13 +217,10 @@ class QuaternityClock {
         this._currentPlayer.onGame = false;
         this._activePlayersCount--;
         if (this._activePlayersCount <= 1) {
-            //this._gameOver = true;
             this._ui.AlertPlayerLostByTime(this._currentPlayerIdx, []);
         } else {
-            //this._gamePaused = true;
             let playerOutIdx = this._currentPlayerIdx;
-            this._MoveToNextPlayer();
-            let nextPlayerIdx = this._currentPlayerIdx;
+            let nextPlayerIdx = this.NextActivePlayerIdx(this._currentPlayerIdx);
             this._ui.AlertPlayerLostByTime(playerOutIdx, [nextPlayerIdx]);
         }
     }
