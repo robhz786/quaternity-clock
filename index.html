@@ -585,9 +585,6 @@
          AlertPause(playersAvailableForUnpausing) {
              GotoPausedStateUI("GAME PAUSED", "", playersAvailableForUnpausing);
          }
-         SetPlayersAvailabeForUnpausing(players) {
-             EnableUnpauseButtons(players);
-         }
          AlertPlayerLostByTime(playerId, nextPlayerArr) {
              this.DisablePlayer(playerId);
              const subtitle = `${playersNames[playerId]} lost by timeout`;
@@ -647,24 +644,22 @@
          return null;
      }
 
-     function Start() {
-//         const gp = GetFirstGamepad();
-//         if (gp === null) {
-//             document.getElementById("start-panel-error").textContent
-//             = "gamepad not conected";
-//             return;
-//         }
+     function IsInteger(str) {
+         return str === "" || regexInteger.test(str);
+     }
 
+     function ToInt(str) {
+         return str === "" ?  0 : parseInt(str);
+     }
+
+     function Start() {
          let minutesStr =  document.getElementById("minutes").value;
          let secondsStr =  document.getElementById("seconds").value;
          let addSecsStr = document.getElementById("addSecondsEachMove").value;
-         if (regexInteger.test(minutesStr) &&
-             regexInteger.test(secondsStr) &&
-             regexInteger.test(addSecsStr))
-         {
-             let minutes = parseInt(minutesStr);
-             let seconds = parseInt(secondsStr) + minutes * 60;
-             let addSecs = parseInt(addSecsStr);
+         if (IsInteger(minutesStr) && IsInteger(secondsStr) && IsInteger(addSecsStr)) {
+             let minutes = ToInt(minutesStr);
+             let seconds = ToInt(secondsStr) + minutes * 60;
+             let addSecs = ToInt(addSecsStr);
              if (seconds > 0) {
                  DoStart(seconds, addSecs);
                  return;
