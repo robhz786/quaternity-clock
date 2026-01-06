@@ -480,24 +480,28 @@
          return false;
      }
 
-     function GotoPausedStateUI(title, subtitle, playersAvailableForUnpausing) {
+     function GotoPausedStateUI(title, subtitle) {
          SetGameState("paused");
          document.getElementById("terminate-game-button-div").style.display = "flex";
          document.getElementById("remove-player-button-div").style.display = "flex";
          document.getElementById("new-game-button-div").style.display = "none";
          SetPausedPanelTitle(title, subtitle);
-         EnableUnpauseButtons(playersAvailableForUnpausing);
+         EnableUnpauseButtons();
      }
      function SetPausedPanelTitle(title, subtitle) {
          document.getElementById("paused-title").textContent = title
          document.getElementById("paused-subtitle").textContent = subtitle;
      }
 
-     function EnableUnpauseButtons(players) {
+     function EnableUnpauseButtons() {
+         players = game.PlayersAvailableForUnpausing();
          if (players.length === 0) {
              document.getElementById("unpause-buttons-div").style.display = "none";
+             document.getElementById("terminate-game-button-div").style.display = "flex";
          } else {
              document.getElementById("unpause-buttons-div").style.display = "flex";
+             document.getElementById("terminate-game-button-div").style.display = "none";
+
              let positions = Array(4).fill(-1);
              for (const idx in players) {
                  positions[players[idx]] = idx;
@@ -543,11 +547,12 @@
      }
 
      function OnChangeOfRemovePlayerCheckbox(idx) {
-         const checked = document.getElementById(checkboxesIds[idx]).checked;
-         const playersForUnpausing = checked ? game.DisablePlayer(idx) : game.ReEnablePlayer(idx);
-         EnableUnpauseButtons(playersForUnpausing);
-         document.getElementById("terminate-game-button-div").style.display =
-             playersForUnpausing.length === 0 ? "flex" : "none";
+         if (document.getElementById(checkboxesIds[idx]).checked) {
+             game.DisablePlayer(idx);
+         } else {
+             game.ReEnablePlayer(idx);
+         }
+         EnableUnpauseButtons();
      }
      function Pause() {
          if (game) {
@@ -582,16 +587,16 @@
          AlertRunning(str) {
              GotoUnpausedStateUI();
          }
-         AlertPause(playersAvailableForUnpausing) {
-             GotoPausedStateUI("GAME PAUSED", "", playersAvailableForUnpausing);
+         AlertPause() {
+             GotoPausedStateUI("GAME PAUSED", "");
          }
-         AlertPlayerLostByTime(playerId, nextPlayerArr) {
+         AlertPlayerLostByTime(playerId, gameOver) {
              this.DisablePlayer(playerId);
              const subtitle = `${playersNames[playerId]} lost by timeout`;
-             if (nextPlayerArr && nextPlayerArr.length !== 0) {
-                 GotoPausedStateUI("GAME PAUSED", subtitle, nextPlayerArr);
-             } else {
+             if (gameOver) {
                  this.AlertGameOver(subtitle);
+             } else {
+                 GotoPausedStateUI("GAME PAUSED", subtitle);
              }
          }
          AlertGameOver(subtitle) {

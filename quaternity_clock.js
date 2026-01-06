@@ -112,9 +112,8 @@ class QuaternityClock {
         if (remainingTime <= 0.0) {
             this._OnCurrentPlayerTimeOut();
         } else {
-            //this._ui.UpdatePlayerRemainingTime(this._currentPlayerIdx, remainingTime_ms);
             let nextPlayerIdx = this.NextActivePlayerIdx(this._currentPlayerIdx);
-            this._ui.AlertPause([this._currentPlayerIdx, nextPlayerIdx]);
+            this._ui.AlertPause();
         }
     }
 
@@ -144,9 +143,7 @@ class QuaternityClock {
                 --this._activePlayersCount;
                 this._ui.DisablePlayer(idx);
             }
-            return this._PlayersAvailableForUnpausing();
         }
-        return [];
     }
 
     ReEnablePlayer(idx) {
@@ -160,12 +157,10 @@ class QuaternityClock {
                     this._ui.UnhighlightPlayer(idx);
                 }
             }
-            return this._PlayersAvailableForUnpausing();
         }
-        return [];
     }
 
-    _PlayersAvailableForUnpausing() {
+    PlayersAvailableForUnpausing() {
         if (this._activePlayersCount >= 2) {
             const nextPlayerIdx = this.NextActivePlayerIdx(this._currentPlayerIdx);
             if (this._currentPlayer.onGame) {
@@ -215,14 +210,9 @@ class QuaternityClock {
         playBeep(1.0);
         this._ui.SetPlayerRemainingTimeToZero(this._currentPlayerIdx);
         this._currentPlayer.onGame = false;
-        this._activePlayersCount--;
-        if (this._activePlayersCount <= 1) {
-            this._ui.AlertPlayerLostByTime(this._currentPlayerIdx, []);
-        } else {
-            let playerOutIdx = this._currentPlayerIdx;
-            let nextPlayerIdx = this.NextActivePlayerIdx(this._currentPlayerIdx);
-            this._ui.AlertPlayerLostByTime(playerOutIdx, [nextPlayerIdx]);
-        }
+        --this._activePlayersCount;
+        const gameOver = this._activePlayersCount < 2;
+        this._ui.AlertPlayerLostByTime(this._currentPlayerIdx, gameOver);
     }
 
     _MoveToNextPlayer() {
