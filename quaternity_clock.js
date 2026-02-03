@@ -82,12 +82,14 @@ class QuaternityClock {
          if (gamepadsArray != null) {
              const gamepad = gamepadsArray[0];
              if (gamepad != null) {
-                 const buttons = gamepad.buttons;
                  const playerIdx = this._currentPlayerIdx;
-                 return ( (playerIdx == 0 && buttons[14].pressed) ||
-                          (playerIdx == 1 && buttons[12].pressed) ||
-                          (playerIdx == 2 && buttons[15].pressed) ||
-                          (playerIdx == 3 && buttons[13].pressed) );
+                 const buttons = gamepad.buttons;
+                 if (buttons.length >= 4) {
+                     return ( (playerIdx == 0 && buttons[0].pressed) ||
+                              (playerIdx == 1 && buttons[1].pressed) ||
+                              (playerIdx == 2 && buttons[2].pressed) ||
+                              (playerIdx == 3 && buttons[3].pressed) );
+                 }
              }
          }
          return false;
