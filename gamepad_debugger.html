@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       <script>
+        let gamepadButtonsDiv = null;
+        let gamepadDescriptionDiv = null;
+
+        function ReadGamepads() {
+            const gamepads = [];
+            const gamepadsArray = navigator.getGamepads();
+            if (gamepadsArray != null) {
+                for (let g in gamepadsArray) {
+                    const gamepad = gamepadsArray[g];
+                    if (gamepad != null) {
+                        const buttons = gamepad.buttons;
+                        let r = `${buttons.length} buttons:`;
+                        for (let i in buttons) {
+                            r = r.concat(`__${i}`, buttons[i].pressed ? `X` : "_");
+                        }
+                        gamepads[g] = {
+                            id: gamepad.id,
+                            buttonsStr: r
+                        }; 
+                    }
+
+                }
+            }
+            return gamepads;
+        }
+
+        function OnNewAnimFrame(timestamp) {
+            if (gamepadButtonsDiv === null) {       
+                gamepadButtonsDiv = document.getElementById("gamepadButtons");
+            }
+            if (gamepadDescriptionDiv === null) {
+                gamepadDescriptionDiv = document.getElementById("gamepadId");
+            }
+            if (gamepadButtonsDiv !== null && gamepadDescriptionDiv !== null) {
+                const gamepadsStates = ReadGamepads();
+                if (gamepadsStates.length > 0) {
+                    gamepadDescriptionDiv.textContent = gamepadsStates[0].id;
+                    gamepadButtonsDiv.textContent = gamepadsStates[0].buttonsStr;
+                } else {
+                    gamepadDescriptionDiv.textContent = "";
+                    gamepadButtonsDiv.textContent = "";
+                }
+            }
+            window.requestAnimationFrame(OnNewAnimFrame);
+        }
+
+        function StartAnim() {
+            window.requestAnimationFrame(OnNewAnimFrame);
+        }
+        window.requestAnimationFrame(OnNewAnimFrame);
+       </script>
+       <style>
+        #gamepadButtons {
+            font-family: monospace;
+        }
+       </style>
+    </head>
+    <body>
+        
+        <div id="gamepadId"></div>
+        <div id="gamepadButtons"></div>
+    </body>
+</html>
