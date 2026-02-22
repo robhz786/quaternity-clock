@@ -197,7 +197,7 @@
      #quaternity-clock:not([data-gamestate="running"]) {
          --players-columns-count: 2;
          #clocks-container .player-clock {
-             font-size: 4.5vh;
+             font-size: max(4.5vh, 2.5vw);
          }
          @media only screen and (1 <= aspect-ratio) {
              --players-columns-count: 4;
@@ -220,12 +220,32 @@
                  font-size: min(5vh, 8vw);
              }
              #paused-panel-buttons-div {
-                 display: flex;
-                 flex-direction: column;
-                 @media only screen and (2 <= aspect-ratio) {
-                     margin-left: auto;
-                     margin-right: auto;
-                     width: 80vw;
+                 margin-left: auto;
+                 margin-right: auto;
+                 width: 80vw;
+                 @media only screen and (aspect-ratio < 1.2) {
+                     display: flex;
+                     flex-direction: column;
+                     .button-div {
+                         button {
+                             width: 64vw;
+                         }
+                     }
+                 }
+                 @media only screen and (1.2 <= aspect-ratio ) {
+                     display: grid;
+                     grid-template-columns: auto auto;
+                     row-gap: 1vh;
+                     column-gap: 3vh;
+                     .button-div {
+                         button {
+                             width: 100%;
+                             height: 12vh;
+                         }
+                     }
+                 }
+                 @media only screen and (2.5 <= aspect-ratio ) {
+                     display: flex;
                      flex-direction: row;
                      justify-content: space-around;
                      .button-div {
@@ -265,9 +285,12 @@
              display: none;
          }
      }
+     #undo-button-div {
+         display: none;
+     }
      #quaternity-clock[data-gamestate="paused"] {
-         #remove-player-button-div {
-             display: flex;
+         #remove-player-button-div, #undo-button-div {
+             display: block;
          }
          #confirm-terminate-panel-div {
              display: none;
@@ -301,7 +324,7 @@
      }
      #quaternity-clock[data-gamestate="removing-player-dead-end"] {
          #terminate-game-button-div {
-             display: flex;
+             display: block;
          }
          #unpause-buttons-div {
              display: none;
@@ -342,7 +365,7 @@
          display: none;
      }
      #remove-player-button-div{
-         display: flex;
+         display: block;
      }
      #quaternity-clock[data-gamestate="over"] {
          #new-game-button-div {
@@ -354,7 +377,7 @@
          }
      }
      .when-not-on-fullscreen {
-         display: flex;
+         display: block;
      }
      .when-on-fullscreen {
          display: none;
@@ -364,7 +387,7 @@
              display: none;
          }
          .when-on-fullscreen {
-             display: flex;
+             display: block;
          }
      }
      #clocks-container {
@@ -591,6 +614,11 @@
          }
          EnableUnpauseButtons(playersForUnpausing);
      }
+
+     function OpenUndoPanel() {
+         // to-do
+     }
+
      function Pause() {
          if (game) {
              game.Pause();
@@ -628,11 +656,11 @@
          }
          AlertPlayerLostByTime(playerId, gameOver) {
              this.DisablePlayer(playerId);
-             const subtitle = `${playersNames[playerId]} lost by timeout`;
+             const title = `${playersNames[playerId]} lost by timeout`;
              if (gameOver) {
-                 this.AlertGameOver(subtitle);
+                 this.AlertGameOver(title);
              } else {
-                 GotoPausedStateUI("GAME PAUSED", subtitle);
+                 GotoPausedStateUI(title);
              }
          }
          AlertGameOver(subtitle) {
@@ -917,25 +945,31 @@
           <div id="paused-panel-buttons-div">
 
             <div class="button-div" id="remove-player-button-div">
-              <button onclick="OpenRemovePlayerPanel()"  style="width:80%">
+              <button onclick="OpenRemovePlayerPanel()">
                 Remove player
               </button>
             </div>
 
+            <div class="button-div" id="undo-button-div">
+              <button onclick="OpenUndoPanel()">
+                Undo
+              </button>
+            </div>
+
             <div class="button-div when-not-on-fullscreen">
-              <button onclick="EnterFullscreen()" style="width:80%">
+              <button onclick="EnterFullscreen()">
                 Enter Fullscreen
               </button>
             </div>
 
             <div class="button-div when-on-fullscreen">
-              <button onclick="ExitFullscreen()" style="width:80%">
+              <button onclick="ExitFullscreen()" >
                 Quit fullscreen
               </button>
             </div>
 
             <div class="button-div" id="terminate-game-button-div">
-              <button onclick="PromptTerminateGame()"  style="width:80%">
+              <button onclick="PromptTerminateGame()" >
                 Terminate game
               </button>
             </div>
