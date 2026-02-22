@@ -407,6 +407,17 @@
     <script>
      const playersNames = ["White", "Red", "Black", "Green"];
      const regexInteger = /^[0-9]+$/;
+     const buttonsSet = {
+         buttons : [false, false, false, false],
+         IsPressed : function(idx) {
+             return this.buttons[idx] === true;
+         },
+         Reset: function() {
+             for (let i in this.buttons) {
+                 this.buttons[i] = false;
+             }
+         }
+     };
      let game = null;
      let quaternityClockDiv = null;
 
@@ -414,6 +425,29 @@
      let wakelockPromise = null;
      let wakelockHandle = null;
      let wakelockAcquired = false;
+
+     function SetValueOfButtonCorrespondingToKey(key, value) {
+         if (key === 'a' || key === 'A') {
+             buttonsSet.buttons[0] = value;
+         } else if (key === 'b' || key === 'B') {
+             buttonsSet.buttons[1] = value;
+         } else if (key === 'c' || key === 'C') {
+             buttonsSet.buttons[2] = value;
+         } else if (key === 'd' || key === 'D') {
+             buttonsSet.buttons[3] = value;
+         }
+     }
+
+     function OnKeyDown(event) {
+         SetValueOfButtonCorrespondingToKey(event.key, true);
+     }
+
+     function OnKeyUp(envent) {
+         SetValueOfButtonCorrespondingToKey(event.key, false);
+     }
+
+     document.addEventListener('keydown', OnKeyDown);
+     document.addEventListener('keyup', OnKeyUp);
 
      function EnterFullscreen() {
          document.getElementById("quaternity-clock").requestFullscreen();
@@ -686,7 +720,8 @@
          for (const i in players) {
              ui.UpdatePlayerRemainingTime(i, players[i].RemainingTime_ms())
          }
-         game = new QuaternityClock(players, ui);
+         buttonsSet.Reset();
+         game = new QuaternityClock(players, ui, buttonsSet);
          playBeep(1);
          game.Unpause(0);
      }

@@ -43,7 +43,7 @@ class QuaternityPlayerClockDisplay {
 }
 
 class QuaternityClock {
-    constructor(players, statusUI) {
+    constructor(players, statusUI, buttonsSet) {
         this._players = players;
         this._ui = statusUI;
         for (let i in this._players) {
@@ -59,6 +59,7 @@ class QuaternityClock {
         this._previousTimestamp = 0;
         this._thresholdTimestamp = 0.0;
         this._ThresholdTimeCallback = null;
+        this._buttonsSet = buttonsSet;
     }
 
     _RequestAnimationFrame()
@@ -78,22 +79,8 @@ class QuaternityClock {
     }
 
     _IsCurrentPlayerButtonPressed() {
-         const gamepadsArray = navigator.getGamepads();
-         if (gamepadsArray != null) {
-             const gamepad = gamepadsArray[0];
-             if (gamepad != null) {
-                 const playerIdx = this._currentPlayerIdx;
-                 const buttons = gamepad.buttons;
-                 if (buttons.length >= 4) {
-                     return ( (playerIdx == 0 && buttons[0].pressed) ||
-                              (playerIdx == 1 && buttons[1].pressed) ||
-                              (playerIdx == 2 && buttons[2].pressed) ||
-                              (playerIdx == 3 && buttons[3].pressed) );
-                 }
-             }
-         }
-         return false;
-     }
+        return this._buttonsSet.IsPressed(this._currentPlayerIdx);
+    }
 
     _OnPlayerButtonPressed(timestamp) {
         const remainingTime = this._currentPlayer.OnMoveDone(timestamp - this._previousTimestamp);
