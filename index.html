@@ -28,7 +28,8 @@
      }
 
      /* data-gamestate values:
-        not-started, running, paused, confirm-terminate, removing-player, over
+        not-started, running, paused, confirm-terminate,
+        removing-player, removing-player-dead-end, over
       */
      #quaternity-clock[data-gamestate="not-started"] {
          #game-panel,#confirm-terminate-panel-div,div.inside-legend {
@@ -138,7 +139,6 @@
              text-align: center;
              background-color: black;
          }
-
          --players-columns-count: 1;
          .players-grid {
              display: grid;
@@ -273,8 +273,8 @@
              display: none;
          }
      }
-     #quaternity-clock[data-gamestate="removing-player"] {
-         #remove-player-button-div,#confirm-terminate-panel-div {
+     #quaternity-clock[data-gamestate^="removing-player"] {
+         #remove-player-button-div,#confirm-terminate-panel-div,#terminate-game-button-div{
              display: none;
          }
          #remove-players-div {
@@ -297,6 +297,14 @@
                      text-align: left;
                  }
              }
+         }
+     }
+     #quaternity-clock[data-gamestate="removing-player-dead-end"] {
+         #terminate-game-button-div {
+             display: flex;
+         }
+         #unpause-buttons-div {
+             display: none;
          }
      }
      #quaternity-clock[data-gamestate="confim-terminate"] {
@@ -330,16 +338,18 @@
              }
          }
      }
+     #new-game-button-div {
+         display: none;
+     }
+     #remove-player-button-div{
+         display: flex;
+     }
      #quaternity-clock[data-gamestate="over"] {
          #new-game-button-div {
              display: flex;
          }
-         #confirm-terminate-panel-div {
-             display: none;
-         }
-     }
-     #quaternity-clock:not([data-gamestate="over"]) {
-         #new-game-button-div {
+         #unpause-buttons-div,#confirm-terminate-panel-div,
+         #terminate-game-button-div,#remove-player-button-div{
              display: none;
          }
      }
@@ -516,44 +526,31 @@
 
      function GotoPausedStateUI(title, subtitle) {
          SetGameState("paused");
-         document.getElementById("terminate-game-button-div").style.display = "flex";
-         document.getElementById("remove-player-button-div").style.display = "flex";
-         document.getElementById("new-game-button-div").style.display = "none";
          SetPausedPanelTitle(title, subtitle);
-         EnableUnpauseButtons();
+         EnableUnpauseButtons(game.PlayersAvailableForUnpausing());
      }
      function SetPausedPanelTitle(title, subtitle) {
          document.getElementById("paused-title").textContent = title
          document.getElementById("paused-subtitle").textContent = subtitle;
      }
 
-     function EnableUnpauseButtons() {
-         players = game.PlayersAvailableForUnpausing();
-         if (players.length === 0) {
-             document.getElementById("unpause-buttons-div").style.display = "none";
-             document.getElementById("terminate-game-button-div").style.display = "flex";
-         } else {
-             document.getElementById("unpause-buttons-div").style.display = "flex";
-             if (quaternityClockDiv.dataset.gamestate == "removing-player") {;
-                 document.getElementById("terminate-game-button-div").style.display = "none";
-             }
-             let positions = Array(4).fill(-1);
-             for (const idx in players) {
-                 positions[players[idx]] = idx;
-             }
-             const unpauseButtonDivs = [
-                 "unpause-white-div",
-                 "unpause-red-div",
-                 "unpause-black-div",
-                 "unpause-green-div" ];
-             for (const idx in positions) {
-                 const divElem = document.getElementById(unpauseButtonDivs[idx]);
-                 if (positions[idx] >= 0) {
-                     divElem.style.display = "block";
-                     divElem.style.order =  positions[idx];
-                 } else {
-                     divElem.style.display = "none";
-                 }
+     function EnableUnpauseButtons(players) {
+         let positions = Array(4).fill(-1);
+         for (const idx in players) {
+             positions[players[idx]] = idx;
+         }
+         const unpauseButtonDivs = [
+             "unpause-white-div",
+             "unpause-red-div",
+             "unpause-black-div",
+             "unpause-green-div" ];
+         for (const idx in positions) {
+             const divElem = document.getElementById(unpauseButtonDivs[idx]);
+             if (positions[idx] >= 0) {
+                 divElem.style.display = "block";
+                 divElem.style.order =  positions[idx];
+             } else {
+                 divElem.style.display = "none";
              }
          }
      }
@@ -568,12 +565,9 @@
      function OpenRemovePlayerPanel() {
          SetGameState("removing-player");
          document.getElementById("paused-title").textContent = "Remove Player(s)";
-         document.getElementById("terminate-game-button-div").style.display = "none";
-         document.getElementById("remove-player-button-div").style.display = "none";
 
          const divs = ["remove-player0-div", "remove-player1-div",
                        "remove-player2-div", "remove-player3-div"];
-
          for (const i in divs) {
              const div = document.getElementById(divs[i]);
              const cb = document.getElementById(checkboxesIds[i]);
@@ -589,7 +583,13 @@
          } else {
              game.ReEnablePlayer(idx);
          }
-         EnableUnpauseButtons();
+         playersForUnpausing = game.PlayersAvailableForUnpausing();
+         if (playersForUnpausing.length > 0) {
+             SetGameState("removing-player");
+         } else {
+             SetGameState("removing-player-dead-end");
+         }
+         EnableUnpauseButtons(playersForUnpausing);
      }
      function Pause() {
          if (game) {
@@ -638,10 +638,6 @@
          AlertGameOver(subtitle) {
              SetGameState("over");
              SetPausedPanelTitle("GAME OVER", subtitle);
-             document.getElementById("new-game-button-div").style.display = "flex";
-             document.getElementById("unpause-buttons-div").style.display = "none";
-             document.getElementById("remove-player-button-div").style.display = "none";
-             document.getElementById("terminate-game-button-div").style.display = "none";
              game = null;
          }
          SetPlayerStatus(playerId, s)
@@ -944,7 +940,7 @@
               </button>
             </div>
 
-            <div class="button-div" id="new-game-button-div" style="display:none">
+            <div class="button-div" id="new-game-button-div">
               <button onclick="StartNewGame()" style="width:80%">
                 Start new game
               </button>
