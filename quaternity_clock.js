@@ -15,7 +15,7 @@ function playBeep(duration_sec) {
     oscillator.stop(audioCtx.currentTime + duration_sec);
 }
 
-class QuaternityPlayerClockDisplay {
+class QuaternityPlayerTimeCounter {
     constructor(time_sec, additionPerRound_sec) {
         this.onGame = true;
         this._remainingTime_ms = time_sec * 1000.0;
@@ -217,9 +217,6 @@ class QuaternityClock {
         this._currentPlayerIdx = playerIdx;
         this._currentPlayer = this._players[this._currentPlayerIdx];
         this._ui.HighlightPlayer(this._currentPlayerIdx);
-        // if (this._currentPlayer.RemainingTime_ms() == 0) {
-        //     this._OnCurrentPlayerTimeOut();
-        // }
     }
 
     NextActivePlayerIdx(idx) {

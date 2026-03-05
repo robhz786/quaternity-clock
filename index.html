@@ -735,10 +735,10 @@
 
      function DoStart(time_sec, addSecs) {
          const players = [
-             new QuaternityPlayerClockDisplay(time_sec, addSecs),
-             new QuaternityPlayerClockDisplay(time_sec, addSecs),
-             new QuaternityPlayerClockDisplay(time_sec, addSecs),
-             new QuaternityPlayerClockDisplay(time_sec, addSecs)
+             new QuaternityPlayerTimeCounter(time_sec, addSecs),
+             new QuaternityPlayerTimeCounter(time_sec, addSecs),
+             new QuaternityPlayerTimeCounter(time_sec, addSecs),
+             new QuaternityPlayerTimeCounter(time_sec, addSecs)
          ];
          const ui = new UI();
          for (const i in players) {
