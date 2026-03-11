@@ -28,13 +28,27 @@
      }
 
      #game-panel,#confirm-terminate-panel-div,#start-panel-div,#keyboard-div,#paused-state-pannel,
-     #remove-players-div,#unpause-buttons-div,#remove-player-button-div,
+     #undo-panel,#remove-players-div,#unpause-buttons-div,#remove-player-button-div,
      #terminate-game-button-div,#undo-button-div,#new-game-button-div {
          display: none;
      }
 
+     .when-not-on-fullscreen {
+         display: block;
+     }
+     .when-on-fullscreen {
+         display: none;
+     }
+     :fullscreen {
+         .when-not-on-fullscreen {
+             display: none;
+         }
+         .when-on-fullscreen {
+             display: block;
+         }
+     }
      /* data-gamestate values:
-        not-started, running, paused, confirm-terminate,
+        not-started, running, paused, confirm-terminate, undoing-move,
         removing-player, removing-player-dead-end, over
       */
      #quaternity-clock[data-gamestate="not-started"] {
@@ -165,6 +179,7 @@
      #quaternity-clock[data-gamestate="over"],
      #quaternity-clock[data-gamestate="running"],
      #quaternity-clock[data-gamestate="paused"],
+     #quaternity-clock[data-gamestate="undoing-move"],
      #quaternity-clock[data-gamestate^="removing-player"] {
          #game-panel {
              display: flex;
@@ -229,7 +244,10 @@
              font-size: min(22vh, 10vw);
          }
      }
-     #quaternity-clock:not([data-gamestate="running"]) {
+     #quaternity-clock[data-gamestate="over"],
+     #quaternity-clock[data-gamestate="paused"],
+     #quaternity-clock[data-gamestate="undoing-move"],
+     #quaternity-clock[data-gamestate^="removing-player"] {
          --players-columns-count: 2;
          #clocks-container .player-clock {
              font-size: max(4.5vh, 2.5vw);
@@ -237,6 +255,10 @@
          @media only screen and (1 <= aspect-ratio) {
              --players-columns-count: 4;
          }
+     }
+     #quaternity-clock[data-gamestate="over"],
+     #quaternity-clock[data-gamestate="paused"],
+     #quaternity-clock[data-gamestate^="removing-player"]  {
          #paused-state-pannel {
              font-size: 5vh;
              background-color: rgb(155, 155, 155);
@@ -348,18 +370,86 @@
              display: block;
          }
      }
-     .when-not-on-fullscreen {
-         display: block;
-     }
-     .when-on-fullscreen {
-         display: none;
-     }
-     :fullscreen {
-         .when-not-on-fullscreen {
-             display: none;
-         }
-         .when-on-fullscreen {
-             display: block;
+     #quaternity-clock[data-gamestate="undoing-move"] {
+         #undo-panel {
+             display: flex;
+             #game-history {
+                 background-color: white;
+                 div.header {
+                     background-color: beige;
+                     font-size: min(9vh, 9vw);
+                 }
+                 #history-events {
+                     height:70vh;
+                     font-size: min(7vh, 7vw);
+                     overflow-y: scroll;
+                     div {
+                         text-align: left;
+                         margin-left: 5%;
+                     }
+                     #undone-moves {
+                         text-decoration: line-through;
+                         color: darkgrey;
+                     }
+                     hr {
+                         height: 1.2vh;
+                         background-color: gray;
+                         border-style: none;
+                         border-radius: 0.6vh;
+                         width: 90%;
+                         margin-left: auto;
+                         margin-right: auto;
+                     }
+                 }
+             }
+             #undo-redo-buttons {
+                 background-color: beige;
+                 button {
+                     display: block;
+                     font-size: min(7vh, 7vw);
+                 }
+             }
+             @media only screen and (aspect-ratio < 1.5) {
+                 flex-direction: column;
+                 #game-history {
+                     min-width: 90vw;
+                     #history-events {
+                         height: 55vh;
+                     }
+                 }
+                 #undo-redo-buttons {
+                     display: flex;
+                     flex-direction: row;
+                     justify-content: space-evenly;
+                     button {
+                         margin-top: 2vh;
+                         margin-bottom: 2vh;
+                     }
+                 }
+             }
+             @media only screen and (aspect-ratio >= 1.5) {
+                 flex-direction: row;
+                 #game-history {
+                     width: 80vw;
+                     #history-events {
+                         height:70vh;
+                     }
+                 }
+                 #undo-redo-buttons {
+                     width: 20vw
+                     display: flex;
+                     flex-direction: column;
+                     align-items: center;
+                     padding-left: 1vw;
+                     padding-right: 1vw;
+                     button {
+                         margin-top: 8vh;
+                         padding-top: 2vh;
+                         padding-bottom: 2vh;
+                         width: 16vw;
+                     }
+                 }
+             }
          }
      }
      #clocks-container {
@@ -415,7 +505,11 @@
              }
          }
      };
+     let history = null;
+     let historicMovesArr = [];
+     let movesCountToUndo = 0;
      let game = null;
+     let ui = null;
      let quaternityClockDiv = null;
 
      const wakelockSupported = 'wakeLock' in navigator;
@@ -522,23 +616,26 @@
      }
 
      function EnableUnpauseButtons(players) {
-         let positions = Array(4).fill(-1);
-         for (const idx in players) {
-             positions[players[idx]] = idx;
-         }
          const unpauseButtonDivs = [
              "unpause-white-div",
              "unpause-red-div",
              "unpause-black-div",
              "unpause-green-div" ];
-         for (const idx in positions) {
-             const divElem = document.getElementById(unpauseButtonDivs[idx]);
-             if (positions[idx] >= 0) {
-                 divElem.style.display = "block";
-                 divElem.style.order =  positions[idx];
-             } else {
-                 divElem.style.display = "none";
-             }
+         for (const button of unpauseButtonDivs) {
+             document.getElementById(button).style.display = "none";
+         }
+         let order = 0;
+         if (typeof players.current === 'number') {
+             const button = document.getElementById(unpauseButtonDivs.at(players.current));
+             button.style.display = "block";
+             button.style.order =  order++;
+             button.onclick = () => game.UnpauseOnCurrentPlayer();
+         }
+         if (typeof players.next === 'number') {
+             const button = document.getElementById(unpauseButtonDivs.at(players.next));
+             button.style.display = "block";
+             button.style.order =  order;
+             button.onclick = () => game.UnpauseOnNextPlayer();
          }
      }
 
@@ -570,17 +667,13 @@
          } else {
              game.ReEnablePlayer(idx);
          }
-         playersForUnpausing = game.PlayersAvailableForUnpausing();
-         if (playersForUnpausing.length > 0) {
-             SetGameState("removing-player");
-         } else {
+         const playersForUnpausing = game.PlayersAvailableForUnpausing();
+         if (playersForUnpausing.current == null && playersForUnpausing.next == null) {
              SetGameState("removing-player-dead-end");
+         } else {
+             SetGameState("removing-player");
          }
          EnableUnpauseButtons(playersForUnpausing);
-     }
-
-     function OpenUndoPanel() {
-         // to-do
      }
 
      function Pause() {
@@ -588,17 +681,69 @@
              game.Pause();
          }
      }
-     function Unpause(playerIdx) {
-         if (game) {
-             game.Unpause(playerIdx);
+     function OpenUndoPanel() {
+         movesCountToUndo = 0;
+         BuildHistoricMovesArray();
+         FillUndoPanelHistory();
+         SetGameState('undoing-move');
+     }
+
+     function BuildHistoricMovesArray() {
+         const movesCount = history.MovesCount();
+         historicMovesArr.length = 0;
+         for (let i=0; i < movesCount; ++i) {
+             const m = document.createElement("p");
+             m.textContent = `${i+1}) ${history.GetMoveDescription(i)}`;
+             historicMovesArr.push(m);
          }
      }
+
+     function FillUndoPanelHistory() {
+         const undoneMovesElement = document.getElementById("undone-moves");
+         const doneMovesElement = document.getElementById("done-moves");
+
+         undoneMovesElement.textContent = ''; // this removes all children
+         doneMovesElement.textContent = ''; // this removes all children
+
+         for (let i=0; i<movesCountToUndo; ++i) {
+             undoneMovesElement.appendChild(historicMovesArr.at(-1 -i));
+         }
+         for (let i=movesCountToUndo; i < historicMovesArr.length; ++i) {
+             doneMovesElement.appendChild(historicMovesArr.at(-1 -i));
+         }
+     }
+
+     function Undo() {
+         if (movesCountToUndo < historicMovesArr.length) {
+             movesCountToUndo++;
+             ui.UpdatePlayersClock(history.GetGameStateAt(-1 -movesCountToUndo));
+             FillUndoPanelHistory();
+         }
+     }
+     function Redo() {
+         if (movesCountToUndo > 0) {
+             movesCountToUndo--;
+             ui.UpdatePlayersClock(history.GetGameStateAt(-1 -movesCountToUndo));
+             FillUndoPanelHistory();
+         }
+     }
+     function ConfirmUndo() {
+         if (movesCountToUndo > 0) {
+             game.Undo(movesCountToUndo);
+             movesCountToUndo = 0;
+             EnableUnpauseButtons(game.PlayersAvailableForUnpausing());
+         }
+         SetPausedPanelTitle('Game paused', '');
+         SetGameState('paused');
+     }
+
      function PromptTerminateGame() {
          SetGameState("confim-terminate");
      }
      function StartNewGame() {
          SetGameState("not-started");
          game = null;
+         history = null;
      }
      class UI {
          constructor() {
@@ -618,13 +763,14 @@
          AlertPause() {
              GotoPausedStateUI("GAME PAUSED", "");
          }
-         AlertPlayerLostByTime(playerId, gameOver) {
-             this.DisablePlayer(playerId);
+         AlertPlayerLostByTime(playerId, gameOver, playersAvailableForUnpausing) {
              const title = `${playersNames[playerId]} lost by timeout`;
              if (gameOver) {
                  this.AlertGameOver(title);
              } else {
-                 GotoPausedStateUI(title);
+                 SetGameState("paused");
+                 SetPausedPanelTitle(title, "");
+                 EnableUnpauseButtons(playersAvailableForUnpausing);
              }
          }
          AlertGameOver(subtitle) {
@@ -649,19 +795,40 @@
              this.SetPlayerStatus(playerId, "waiting");
          }
          UpdatePlayerRemainingTime(playerId, remainingTime_ms) {
-             let seconds_sum = Math.ceil(remainingTime_ms / 1000.0);
-             let minutes_sum = Math.floor(seconds_sum / 60.0);
-             let hours = Math.floor(minutes_sum / 60.0);
-             let seconds = seconds_sum - minutes_sum * 60.0;
-             let minutes = minutes_sum - hours * 60.0;
-             let minutesStr = minutes >= 10 ? `${minutes}` : `0${minutes}`;
-             let secondsStr = seconds >= 10 ? `${seconds}` : `0${seconds}`;
+             if (remainingTime_ms == 0) {
+                 this.SetPlayerRemainingTimeToZero(playerId);
+             } else {
+                 let seconds_sum = Math.ceil(remainingTime_ms / 1000.0);
+                 let minutes_sum = Math.floor(seconds_sum / 60.0);
+                 let hours = Math.floor(minutes_sum / 60.0);
+                 let seconds = seconds_sum - minutes_sum * 60.0;
+                 let minutes = minutes_sum - hours * 60.0;
+                 let minutesStr = minutes >= 10 ? `${minutes}` : `0${minutes}`;
+                 let secondsStr = seconds >= 10 ? `${seconds}` : `0${seconds}`;
 
-             this.playersClocksDivs[playerId].textContent =
-                 `${hours}:${minutesStr}:${secondsStr}`;
+                 this.playersClocksDivs[playerId].textContent =
+                     `${hours}:${minutesStr}:${secondsStr}`;
+             }
          }
          SetPlayerRemainingTimeToZero(playerId) {
              this.playersClocksDivs[playerId].textContent = "00:00:00";
+         }
+
+         _PlayerClockStatus(gameState, playerIdx) {
+             if (! gameState.players.at(playerIdx).onGame) {
+                 return "disabled";
+             }
+             if (playerIdx == gameState.playerIdx) {
+                 return "current";
+             }
+             return "waiting";
+         }
+         UpdatePlayersClock(gameState) {
+             for (let playerIdx in gameState.players) {
+                 this.SetPlayerStatus(playerIdx, this._PlayerClockStatus(gameState, playerIdx));
+                 const player = gameState.players.at(playerIdx);
+                 this.UpdatePlayerRemainingTime(playerIdx, player.remainingTime_ms);
+             }
          }
      }
 
@@ -704,15 +871,17 @@
              new QuaternityPlayerTimeCounter(time_sec, addSecs),
              new QuaternityPlayerTimeCounter(time_sec, addSecs)
          ];
-         const ui = new UI();
+         ui = new UI();
          for (const i in players) {
              ui.UpdatePlayerRemainingTime(i, players[i].RemainingTime_ms())
          }
          buttonsSet.Reset();
-         game = new QuaternityClock(players, ui, buttonsSet);
+         history = new QuaternityGameHistory(new RecoverableGameState(players, 0));
+         game = new QuaternityClock(players, ui, buttonsSet, history);
          playBeep(1);
-         game.Unpause(0);
+         game.UnpauseOnCurrentPlayer();
      }
+
     </script>
   </head>
   <body>
@@ -755,7 +924,7 @@
         <div id="start-panel-buttons-div">
           <div class="button-div when-not-on-fullscreen">
             <button onclick="EnterFullscreen()">
-              Enter Fullscreen
+              Enter fullscreen
             </button>
           </div>
 
@@ -839,7 +1008,7 @@
               </legend>
 
               <div id="unpause-buttons-container">
-                <div id="unpause-white-div" onclick="Unpause(0)">
+                <div id="unpause-white-div">
                   <!-- see https://www.kirupa.com/web/changing_colors_svg_css_javascript.htm -->
                   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -856,7 +1025,7 @@
                 </div>
 
 
-                <div id="unpause-red-div" onclick="Unpause(1)">
+                <div id="unpause-red-div">
                   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                       <radialGradient id="grad2" cx="70%" cy="30%" r="70%" fx="50%" fy="50%">
@@ -872,7 +1041,7 @@
                 </div>
 
 
-                <div id="unpause-black-div" onclick="Unpause(2)">
+                <div id="unpause-black-div">
                   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                       <radialGradient id="grad3" cx="70%" cy="30%" r="70%" fx="50%" fy="50%">
@@ -888,7 +1057,7 @@
                 </div>
 
 
-                <div id="unpause-green-div"  onclick="Unpause(3)">
+                <div id="unpause-green-div">
                   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                       <radialGradient id="grad4" cx="70%" cy="30%" r="70%" fx="50%" fy="50%">
@@ -922,7 +1091,7 @@
 
             <div class="button-div when-not-on-fullscreen">
               <button onclick="EnterFullscreen()">
-                Enter Fullscreen
+                Enter fullscreen
               </button>
             </div>
 
@@ -947,6 +1116,34 @@
           </div>
         </div>
 
+        <div id="undo-panel">
+          <div id="game-history">
+            <div class="header">
+              History
+            </div>
+            <div id="history-events">
+              <div id="undone-moves">
+              </div>
+              <hr/>
+              <div id="done-moves">
+              </div>
+            </div>
+          </div>
+          <div id="undo-redo-buttons">
+            <button onclick="Undo()">
+              Undo
+            </button>
+
+            <button onclick="Redo()">
+              Redo
+            </button>
+
+            <button onclick="ConfirmUndo()">
+              Done
+            </button>
+          </div>
+        </div>
+
         <div class="players-grid" id="clocks-container">
           <div class="player-clock player0-cell" id="player0-clock">0:00:00</div>
           <div class="player-clock player1-cell" id="player1-clock">0:00:00</div>
@@ -959,7 +1156,6 @@
             PAUSE
           </button>
         </div>
-
 
       </div>
     </div>
