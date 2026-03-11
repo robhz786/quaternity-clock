@@ -27,14 +27,17 @@
          text-align: center; /* To center the text within the centered legend */
      }
 
+     #game-panel,#confirm-terminate-panel-div,#start-panel-div,#keyboard-div,#paused-state-pannel,
+     #remove-players-div,#unpause-buttons-div,#remove-player-button-div,
+     #terminate-game-button-div,#undo-button-div,#new-game-button-div {
+         display: none;
+     }
+
      /* data-gamestate values:
         not-started, running, paused, confirm-terminate,
         removing-player, removing-player-dead-end, over
       */
      #quaternity-clock[data-gamestate="not-started"] {
-         #game-panel,#confirm-terminate-panel-div,div.inside-legend {
-             display: none;
-         }
          /*to avoid the background to became black when on fullscreen*/
          /*see https://stackoverflow.com/questions/16163089/background-element-goes-black-when-entering-fullscreen-with-html5*/
          background-color: white;
@@ -49,6 +52,9 @@
              align-items: center;
              height: 90vh;
              background-color: white;
+             div.inside-legend {
+                 display: none;
+             }
              @media only screen and (aspect-ratio < 2) {
                  font-size: min(5vh, 6vw);
              }
@@ -123,16 +129,46 @@
              }
          }
      }
-     #keyboard-div {
-         display: none;
-     }
-     #quaternity-clock:not([data-gamestate="not-started"]) {
-         #start-panel-div {
-             display: none;
-         }
-         #game-panel {
-             min-height: 100vh;
+     #quaternity-clock[data-gamestate="confim-terminate"] {
+         #confirm-terminate-panel-div {
              display: flex;
+             flex-direction: column;
+             font-size: min(12vh, 8vw);
+             justify-content: center;
+             align-items: center;
+             text-align: center;
+             div {
+                 margin-top: 20vh;
+             }
+             @media only screen and (max-aspect-ratio: 8/5) {
+                 div {
+                     margin-top: 10vh;
+                     display: flex;
+                     flex-direction: column;
+                     justify-content: center;
+                     align-items: center;
+                 }
+             }
+             button {
+                 font-size: min(9vh, 6vw);
+                 width: 40vw;
+                 height: 2em;
+                 margin-top: 10vh;
+             }
+         }
+     }
+     #quaternity-clock[data-gamestate="over"] {
+         #new-game-button-div {
+             display: flex;
+         }
+     }
+     #quaternity-clock[data-gamestate="over"],
+     #quaternity-clock[data-gamestate="running"],
+     #quaternity-clock[data-gamestate="paused"],
+     #quaternity-clock[data-gamestate^="removing-player"] {
+         #game-panel {
+             display: flex;
+             min-height: 100vh;
              flex-direction: column;
              align-items: stretch;
              justify-content: center;
@@ -141,7 +177,6 @@
          }
          --players-columns-count: 1;
          .players-grid {
-             display: grid;
              grid-template-columns: repeat(var(--players-columns-count), 1fr);
          }
          .player2-cell {
@@ -156,9 +191,6 @@
              grid-column: var(--column) / span 1;
              grid-row: var(--row) / span 1;
          }
-         #remove-players-div {
-             display: none;
-         }
          #clocks-container {
              /*https://stackoverflow.com/questions/9185434/using-svg-as-background-image*/
              column-gap: 2vw;
@@ -171,6 +203,15 @@
              /*padding: 10px;*/
              background-color: black; /*rgb(100, 100, 100);*/
          }
+         #unpause-buttons-container {
+             display: flex;
+             flex-direction: row;
+             justify-content: space-around;
+             div > svg {
+                 width: min(15vh, 15vw);
+                 height: min(15vh, 15vw);
+             }
+         }
      }
      #quaternity-clock[data-gamestate="running"] {
          #keyboard-div {
@@ -179,12 +220,6 @@
              #pause-button {
                  font-size: min(12vh, 20vw);
              }
-         }
-         #paused-state-pannel {
-             display: none;
-         }
-         #confirm-terminate-panel-div {
-             display: none;
          }
          --players-columns-count: 1;
          @media only screen and (6/5 <= aspect-ratio) {
@@ -260,15 +295,6 @@
              #unpause-buttons-div {
                  padding-bottom: 2vh;
              }
-             #unpause-buttons-container {
-                 display: flex;
-                 flex-direction: row;
-                 justify-content: space-around;
-             }
-             #unpause-buttons-container > div > svg {
-                 width: min(15vh, 15vw);
-                 height: min(15vh, 15vw);
-             }
          }
          #paused-title-div {
              border: calc(0.2vh + 0.2vw) solid black;
@@ -281,25 +307,15 @@
          #paused-subtitle {
              font-size: 6vh;
          }
-         #keyboard-div {
-             display: none;
-         }
-     }
-     #undo-button-div {
-         display: none;
      }
      #quaternity-clock[data-gamestate="paused"] {
-         #remove-player-button-div, #undo-button-div {
+         #remove-player-button-div,#undo-button-div,
+         #terminate-game-button-div,#unpause-buttons-div
+         {
              display: block;
-         }
-         #confirm-terminate-panel-div {
-             display: none;
          }
      }
      #quaternity-clock[data-gamestate^="removing-player"] {
-         #remove-player-button-div,#confirm-terminate-panel-div,#terminate-game-button-div{
-             display: none;
-         }
          #remove-players-div {
              display: grid;
              background-color: white;
@@ -322,58 +338,14 @@
              }
          }
      }
+     #quaternity-clock[data-gamestate="removing-player"] {
+         #unpause-buttons-div {
+             display: block;
+         }
+     }
      #quaternity-clock[data-gamestate="removing-player-dead-end"] {
          #terminate-game-button-div {
              display: block;
-         }
-         #unpause-buttons-div {
-             display: none;
-         }
-     }
-     #quaternity-clock[data-gamestate="confim-terminate"] {
-         #game-panel {
-             display: none;
-         }
-         #confirm-terminate-panel-div {
-             display: flex;
-             flex-direction: column;
-             font-size: min(12vh, 8vw);
-             justify-content: center;
-             align-items: center;
-             text-align: center;
-             div {
-                 margin-top: 20vh;
-             }
-             @media only screen and (max-aspect-ratio: 8/5) {
-                 div {
-                     margin-top: 10vh;
-                     display: flex;
-                     flex-direction: column;
-                     justify-content: center;
-                     align-items: center;
-                 }
-             }
-             button {
-                 font-size: min(9vh, 6vw);
-                 width: 40vw;
-                 height: 2em;
-                 margin-top: 10vh;
-             }
-         }
-     }
-     #new-game-button-div {
-         display: none;
-     }
-     #remove-player-button-div{
-         display: block;
-     }
-     #quaternity-clock[data-gamestate="over"] {
-         #new-game-button-div {
-             display: flex;
-         }
-         #unpause-buttons-div,#confirm-terminate-panel-div,
-         #terminate-game-button-div,#remove-player-button-div{
-             display: none;
          }
      }
      .when-not-on-fullscreen {
@@ -391,6 +363,7 @@
          }
      }
      #clocks-container {
+         display: grid;
          .player-clock {
              color: white;
              padding: 0.2vh; /*calc(0.2vh + 0.2vw);*/
@@ -425,15 +398,6 @@
          .player3-cell {
              background-color: green;
          }
-     }
-     #unpause-buttons-container {
-         display: flex;
-         flex-direction: row;
-         justify-content: space-around;
-     }
-     #unpause-buttons-container > div > svg {
-         width: min(6vh, 15vw);
-         height: min(6vh, 15vw);
      }
     </style>
     <script src="quaternity_clock.js"></script>
