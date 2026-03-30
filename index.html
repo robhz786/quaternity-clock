@@ -635,6 +635,7 @@
 
      function GotoPausedStateUI(title, subtitle) {
          SetGameState("paused");
+         EnableOrDisableRemovePlayerButton();
          SetPausedPanelTitle(title, subtitle);
          EnableUnpauseButtons(game.PlayersAvailableForUnpausing());
      }
@@ -839,8 +840,14 @@
              movesCountToUndo = 0;
              EnableUnpauseButtons(game.PlayersAvailableForUnpausing());
          }
+         EnableOrDisableRemovePlayerButton()
          SetPausedPanelTitle('Game paused', '');
          SetGameState('paused');
+     }
+
+     function EnableOrDisableRemovePlayerButton() {
+         const button = document.getElementById("remove-player-button");
+         button.disabled = game.ResignationAndCheckmateShouldBeDisabled();
      }
 
      function PromptTerminateGame(onCancel) {
@@ -876,6 +883,7 @@
                  this.AlertGameOver(title);
              } else {
                  SetGameState("paused");
+                 EnableOrDisableRemovePlayerButton();
                  SetPausedPanelTitle(title, "");
                  EnableUnpauseButtons(playersAvailableForUnpausing);
              }
@@ -1165,7 +1173,7 @@
           <div id="paused-panel-buttons-div">
 
             <div class="button-div" id="remove-player-button-div">
-              <button onclick="OpenRemovePlayerPanel()">
+              <button onclick="OpenRemovePlayerPanel()" id ="remove-player-button">
                 Remove player
               </button>
             </div>

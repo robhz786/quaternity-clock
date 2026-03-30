@@ -348,6 +348,14 @@ class QuaternityClock {
         }
     }
 
+    ResignationAndCheckmateShouldBeDisabled() {
+        if (this._activePlayersCount > 1) {
+            const lastMove = this._history.GetMove(-1);
+            return lastMove?.eventType !== GameEvents.PLAYER_SPENT_TIME;
+        }
+        return true;
+    }
+
     _SanitizeCheckmateList(defeatedPlayers) {
         const result = new Set();
         for (let p of defeatedPlayers) {
