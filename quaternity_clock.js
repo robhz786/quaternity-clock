@@ -72,7 +72,8 @@ const GameEvents = Object.freeze({
     PLAYER_MOVED: 'PLAYER_MOVED',
     PLAYER_SPENT_TIME: 'PLAYER_SPENT_TIME',
     PLAYER_LOST_BY_TIMEOUT: 'PLAYER_LOST_BY_TIMEOUT',
-    PLAYER_REMOVED: 'PLAYER_REMOVED'
+    CHECKMATE: 'CHECKMATE',
+    RESIGNATION: 'RESIGNATION'
 });
 
 
@@ -83,13 +84,6 @@ class QuaternityGameHistory {
         this._statesHistory = [initialState];
     }
 
-//    Start(playerIdx, playersState) {
-//        this._statesHistory = [playersState];
-//        this._movesHistory = [];
-//        this._elapsedTimeSiceLastMove = 0;
-//    }
-
-
     CurrentPlayerIdx() {
         return this._statesHistory.at(-1).playerIdx;
     }
@@ -98,19 +92,16 @@ class QuaternityGameHistory {
         return PlayerName(this.CurrentPlayerIdx());
     }
 
-    RegisterPlayerMove(newPlayersState) {
+    RegisterPlayerMove(newState) {
         const state = this._statesHistory.at(-1);
         //if (state.players.at(state.playerIdx).onGame) {
-        const txt = `${this.CurrentPlayerName()} -> ${PlayerName(newPlayersState.playerIdx)}`;
-        this._movesHistory.push({
-            msg: function () { return txt; },
-            eventType: GameEvents.PLAYER_MOVED
-        });
-        this._statesHistory.push(newPlayersState);
+        const txt = `${this.CurrentPlayerName()} -> ${PlayerName(newState.playerIdx)}`;
+        this._pushMove(txt, GameEvents.PLAYER_MOVED);
+        this._statesHistory.push(newState);
     }
 
     RegisterElapsedTime(elapsedTime_ms) {
-        if (this._movesHistory.at(-1)?.eventType === GameEvents.PLAYER_SPENT_TIME) {
+            if (this._movesHistory.at(-1)?.eventType === GameEvents.PLAYER_SPENT_TIME) {
             this._UpdateCurrentSpentTimeEvent(elapsedTime_ms);
         } else {
             this._PushNewSpentTimeEvent(elapsedTime_ms)
@@ -168,26 +159,30 @@ class QuaternityGameHistory {
         };
     }
 
-    RegisterPlayersRemoval(removedPlayers, newPlayersState) {
-        this._movesHistory.push(this._MakePlayersRemovalEventObject(removedPlayers));
-        this._statesHistory.push(newPlayersState);
+    RegisterPlayerResignation(newState) {
+        this._pushMove(`${this.CurrentPlayerName()} resigned`, GameEvents.RESIGNATION);
+        this._statesHistory.push(newState);
     }
 
-    _MakePlayersRemovalEventObject(removedPlayers) {
-        const txt = this._PlayersRemovalMsg(removedPlayers);
-        return {
-            msg: function () { return txt; },
-            eventType: GameEvents.PLAYER_REMOVED
-        };
+    RegisterCheckmate(removedPlayers, newState) {
+        this._pushMove(this._CheckmateMsg(removedPlayers), GameEvents.CHECKMATE);
+        this._statesHistory.push(newState);
     }
 
-    _PlayersRemovalMsg(removedPlayers) {
-        let txt = "";
+    _CheckmateMsg(removedPlayers) {
+        let txt = `${this.CurrentPlayerName()} checkmated`;
         for (const p in removedPlayers) {
             const separator = p == 0 ? " " : p < (removedPlayers.length - 1) ? ", " : " and ";
             txt = txt.concat(separator, PlayerName(removedPlayers[p]));
         }
-        return txt.concat(" removed");
+        return txt;
+    }
+
+    _pushMove(txt, eventType) {
+        this._movesHistory.push({
+            msg: function () { return txt; },
+            eventType: GameEvents.PLAYER_MOVED
+        });
     }
 
     GetGameStateAt(idx) {
@@ -327,30 +322,40 @@ class QuaternityClock {
         }
     }
 
-    DisablePlayer(idx) {
-        if (0 <= idx && idx < this._players.length) {
-            if (this._players[idx].onGame) {
-                this._players[idx].onGame = false;
-                --this._activePlayersCount;
-                this._ui.DisablePlayer(idx);
-                this._playersRemovalToBeRegistered.add(idx);
-            }
+    RegisterCurrentPlayerResignation() {
+        this._currentPlayer.onGame = false;
+        if (--this._activePlayersCount >= 2) {
+            this._ui.DisablePlayer(this._currentPlayerIdx);
+            this._currentPlayerIdx = this.NextActivePlayerIdx();
+            this._currentPlayer = this._players[this._currentPlayerIdx];
+            this._history.RegisterPlayerResignation(this._CurrentHistoryState());
+        } else {
+            // todo
         }
     }
 
-    ReEnablePlayer(idx) {
-        if (0 <= idx && idx < this._players.length) {
-            if (!this._players[idx].onGame) {
-                this._players[idx].onGame = true;
-                ++this._activePlayersCount;
-                this._playersRemovalToBeRegistered.delete(idx);
-                if (idx == this._currentPlayerIdx) {
-                    this._ui.HighlightPlayer(idx);
-                } else {
-                    this._ui.UnhighlightPlayer(idx);
-                }
+    RegisterCheckmate(defeatedPlayers) {
+        const players = this._SanitizeCheckmateList(defeatedPlayers);
+        if (players.length + 1 < this._activePlayersCount) {
+            this._activePlayersCount -= players.length;
+            for (let p of players) {
+                this._players[p].onGame = false;
+            }
+            this._SwitchToNextPlayer();
+            const newState = this._CurrentHistoryState();
+            this._history.RegisterCheckmate(players, newState);
+            this._ui.UpdatePlayersClock(newState);
+        }
+    }
+
+    _SanitizeCheckmateList(defeatedPlayers) {
+        const result = new Set();
+        for (let p of defeatedPlayers) {
+            if (p !== this._currentPlayerIdx && this._players.at(p)?.onGame ) {
+                result.add(p);
             }
         }
+        return Array.from(result).sort();
     }
 
     PlayersAvailableForUnpausing() {
@@ -455,6 +460,10 @@ class QuaternityClock {
 
     IsPlayerActive(idx) {
         return this._players[idx].onGame;
+    }
+
+    AlivePlayersCount() {
+        return this._activePlayersCount;
     }
 
     Undo(count) {

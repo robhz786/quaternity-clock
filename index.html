@@ -28,7 +28,7 @@
      }
 
      #game-panel,#confirm-terminate-panel-div,#start-panel-div,#keyboard-div,#paused-state-pannel,
-     #undo-panel,#remove-players-div,#unpause-buttons-div,#remove-player-button-div,
+     #undo-panel,#remove-players-panel,#unpause-buttons-div,#remove-player-button-div,
      #terminate-game-button-div,#undo-button-div,#new-game-button-div {
          display: none;
      }
@@ -49,7 +49,7 @@
      }
      /* data-gamestate values:
         not-started, running, paused, confirm-terminate, undoing-move,
-        removing-player, removing-player-dead-end, over
+        removing-player, over
       */
      #quaternity-clock[data-gamestate="not-started"] {
          /*to avoid the background to became black when on fullscreen*/
@@ -246,8 +246,7 @@
      }
      #quaternity-clock[data-gamestate="over"],
      #quaternity-clock[data-gamestate="paused"],
-     #quaternity-clock[data-gamestate="undoing-move"],
-     #quaternity-clock[data-gamestate^="removing-player"] {
+     #quaternity-clock[data-gamestate="undoing-move"] {
          --players-columns-count: 2;
          #clocks-container .player-clock {
              font-size: max(4.5vh, 2.5vw);
@@ -257,8 +256,7 @@
          }
      }
      #quaternity-clock[data-gamestate="over"],
-     #quaternity-clock[data-gamestate="paused"],
-     #quaternity-clock[data-gamestate^="removing-player"]  {
+     #quaternity-clock[data-gamestate="paused"]  {
          #paused-state-pannel {
              font-size: 5vh;
              background-color: rgb(155, 155, 155);
@@ -337,37 +335,46 @@
              display: block;
          }
      }
-     #quaternity-clock[data-gamestate^="removing-player"] {
-         #remove-players-div {
-             display: grid;
-             background-color: white;
-             margin-top: 2vh;
-             margin-bottom: 2vh;
-             >div {
+     #quaternity-clock[data-gamestate="removing-player"] {
+         #paused-state-pannel, #clocks-container {
+             display: none;
+         }
+         #remove-players-panel {
+             font-size: 6vh;
+             display: flex;
+             flex-direction: column;
+             background-color: beige;
+             #resign-current-player-div, #checkmate-div {
                  display: flex;
-                 align-content: left;
-                 width: max(23vh, 12vw);
-                 border: 2px solid black;
-                 label {
-                     input {
-                         width: 6vh;
-                         height: 4vh;
-                     }
-                     font-size: 5vh;
-                     /*margin-left: 20vw;*/
-                     text-align: left;
+                 flex-direction: row;
+                 /*align-content: left;*/
+                 text-align: left;
+             }
+             #checkmate-boxes {
+                 margin-left: 4vw;
+                 div {
+                     margin-right: 2vw;
                  }
              }
-         }
-     }
-     #quaternity-clock[data-gamestate="removing-player"] {
-         #unpause-buttons-div {
-             display: block;
-         }
-     }
-     #quaternity-clock[data-gamestate="removing-player-dead-end"] {
-         #terminate-game-button-div {
-             display: block;
+             input {
+                 width: 6vh;
+                 height: 4vh;
+             }
+             #checkmate-boxes {
+                 display: flex;
+                 flex-direction: row;
+                 padding-bottom: 10vh;
+             }
+             #remove-players-panel-buttons {
+                 display: flex;
+                 flex-direction: row;
+                 justify-content: space-evenly;
+                 button {
+                     height: 15vh;
+                     width: 40vw;
+                     font-size: 6vh;
+                 }
+             }
          }
      }
      #quaternity-clock[data-gamestate="undoing-move"] {
@@ -489,6 +496,27 @@
              background-color: green;
          }
      }
+     svg.unpause-button[data-player='white'] {
+         --player-color: white;
+     }
+     svg.unpause-button[data-player='red'] {
+         --player-color: red;
+     }
+     svg.unpause-button[data-player='black'] {
+         --player-color: black;
+     }
+     svg.unpause-button[data-player='green'] {
+         --player-color: green;
+     }
+     svg.unpause-button {
+         circle {
+             stroke: var(--player-color);
+         }
+         polygon {
+             fill: var(--player-color);
+         }
+     }
+
     </style>
     <script src="quaternity_clock.js"></script>
     <script>
@@ -643,37 +671,115 @@
          SetGameState("running");
      }
 
-     const checkboxesIds = ["remove-p0-checkbox", "remove-p1-checkbox",
-                            "remove-p2-checkbox", "remove-p3-checkbox"];
+     const checkmateBoxes = ["checkmate-p0-checkbox", "checkmate-p1-checkbox",
+                             "checkmate-p2-checkbox", "checkmate-p3-checkbox"];
+      const checkmateBoxDivs = ["checkmate-player0-div", "checkmate-player1-div",
+                                "checkmate-player2-div", "checkmate-player3-div"];
 
      function OpenRemovePlayerPanel() {
          SetGameState("removing-player");
-         document.getElementById("paused-title").textContent = "Remove Player(s)";
 
-         const divs = ["remove-player0-div", "remove-player1-div",
-                       "remove-player2-div", "remove-player3-div"];
-         for (const i in divs) {
-             const div = document.getElementById(divs[i]);
-             const cb = document.getElementById(checkboxesIds[i]);
-             const active = game.IsPlayerActive(i);
-             cb.checked = !active;
-             cb.disabled = !active;
+         document.getElementById("terminate-game-on-remove-panel").style.display = "none";
+         for (let boxId of checkmateBoxes) {
+             document.getElementById(boxId).checked=false;
+         }
+
+         const playerName = PlayerName(game.CurrentPlayerIdx());
+         document.getElementById("checkmate-input").checked = true;
+         document.getElementById("resign-label").textContent = `${playerName} resigned`;
+
+         const checkmateRadioLabel = document.getElementById("checkmate-label");
+         if (game.AlivePlayersCount() <= 2) {
+             let otherPlayerName = "";
+             checkmateBoxDivs.forEach( (divId, i) => {
+                 document.getElementById(divId).style.display = "none";
+                 if (game.IsPlayerActive(i) && i != game.CurrentPlayerIdx()) {
+                     otherPlayerName = PlayerName(i);
+                 }
+             });
+             checkmateRadioLabel.textContent = `${playerName} checkmated ${otherPlayerName}:`
+         } else {
+             checkmateRadioLabel.textContent = `${playerName} checkmated:`;
+         }
+         OnChangeOfPlayersToBeRemoved();
+     }
+
+     function CountRequestedCheckmates() {
+         let count = 0;
+         for (let boxId of checkmateBoxes) {
+             if (document.getElementById(boxId).checked) {
+                 count++;
+             }
+         }
+         return count;
+     }
+
+     function ShallEnableTerminateButtonOnRemovePlayersPanel() {
+         if (document.getElementById("resign-current-player-input").checked) {
+             if (game.AlivePlayersCount() == 2) {
+                 return true;
+             }
+             return false;
+         }
+         if (CountRequestedCheckmates() + 1 >= game.AlivePlayersCount()) {
+             return true;
+         }
+         return false;
+     }
+
+     function DisplayStatusOfButtonsInRemovePlayersPanel() {
+         if (game.AlivePlayersCount() <= 2) {
+             return { terminate: true, confirm: false };
+         }
+         if (document.getElementById("resign-current-player-input").checked) {
+             return { terminate: false, confirm: true };
+         }
+         const checkmatesCount = CountRequestedCheckmates();
+         if (checkmatesCount + 1 >= game.AlivePlayersCount()) {
+             return { terminate: true, confirm: false };
+         }
+         return { terminate: false, confirm: checkmatesCount > 0 };
+     }
+
+     function OnChangeOfPlayersToBeRemoved() {
+         const terminateButton = document.getElementById("terminate-game-on-remove-panel");
+         const unpauseButton = document.getElementById("confirm-players-removal");
+
+         const shallShow = DisplayStatusOfButtonsInRemovePlayersPanel();
+         terminateButton.style.display = shallShow.terminate ? 'block' : 'none';
+         unpauseButton.style.display = shallShow.confirm ? 'block' : 'none';
+
+         const resignationChecked = document.getElementById("resign-current-player-input").checked;
+         if (resignationChecked || game.AlivePlayersCount() <= 2) {
+             for (let boxDivId of checkmateBoxDivs) {
+                 document.getElementById(boxDivId).style.display = "none";
+             }
+         } else {
+             checkmateBoxDivs.forEach( (divId, i) => {
+                 const checkboxElement = document.getElementById(divId);
+                 const couldBeCheckmated = game.IsPlayerActive(i) && i != game.CurrentPlayerIdx();
+                 checkboxElement.style.display = couldBeCheckmated ? "block" : "none";
+             });
          }
      }
 
-     function OnChangeOfRemovePlayerCheckbox(idx) {
-         if (document.getElementById(checkboxesIds[idx]).checked) {
-             game.DisablePlayer(idx);
+     function CancelRemovingPlayers() {
+         SetGameState("paused");
+     }
+
+     function ConfirmRemovingPlayers() {
+         if (document.getElementById("resign-current-player-input").checked) {
+             game.RegisterCurrentPlayerResignation();
          } else {
-             game.ReEnablePlayer(idx);
+             const players = [];
+             checkmateBoxes.forEach( (box, i) => {
+                 if (document.getElementById(box).checked) {
+                     players.push(i);
+                 }
+             });
+             game.RegisterCheckmate(players);
          }
-         const playersForUnpausing = game.PlayersAvailableForUnpausing();
-         if (playersForUnpausing.current == null && playersForUnpausing.next == null) {
-             SetGameState("removing-player-dead-end");
-         } else {
-             SetGameState("removing-player");
-         }
-         EnableUnpauseButtons(playersForUnpausing);
+         game.UnpauseOnCurrentPlayer();
      }
 
      function Pause() {
@@ -737,7 +843,8 @@
          SetGameState('paused');
      }
 
-     function PromptTerminateGame() {
+     function PromptTerminateGame(onCancel) {
+         document.getElementById("CancelTerminateButton").onclick = onCancel;
          SetGameState("confim-terminate");
      }
      function StartNewGame() {
@@ -885,6 +992,21 @@
     </script>
   </head>
   <body>
+    <template id="unpause-button-icon">
+      <svg class="unpause-button" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="grad1" cx="70%" cy="30%" r="70%" fx="50%" fy="50%">
+            <stop offset="0%" stop-color="lightgrey" />
+            <stop offset="100%" stop-color="grey" />
+          </radialGradient>
+        </defs>
+        <circle r="48" cx="50" cy="50" fill="url(#grad1)"
+                stroke="yellow" stroke-width="2"/>
+        <polygon points="30,15.36 90,50 30,84.64" fill="yellow"
+                 stroke="gray" stroke-width="2"/>
+      </svg>
+    </template>
+
     <div id="quaternity-clock" data-gamestate="not-started">
       <div id="start-panel-div">
         <div class="time-inputs">
@@ -948,7 +1070,7 @@
       <div id="confirm-terminate-panel-div">
         <div>Terminate game?</div>
         <div>
-          <button onclick="SetGameState('paused')">
+          <button id="CancelTerminateButton" onclick="SetGameState('paused')">
             Cancel
           </button>
           <button onclick="StartNewGame()">
@@ -963,41 +1085,6 @@
             <div id="paused-title">
             </div>
             <div id="paused-subtitle">
-            </div>
-          </div>
-
-          <div class="players-grid" id="remove-players-div">
-
-            <div class="player0-cell" id="remove-player0-div">
-              <label>
-                <input type="checkbox" id="remove-p0-checkbox"
-                       onchange="OnChangeOfRemovePlayerCheckbox(0)"/>
-                White
-              </label>
-            </div>
-
-            <div class="player1-cell" id="remove-player1-div">
-              <label>
-                <input type="checkbox" id="remove-p1-checkbox"
-                       onchange="OnChangeOfRemovePlayerCheckbox(1)"/>
-                Red
-              </label>
-            </div>
-
-            <div class="player2-cell" id="remove-player2-div">
-              <label>
-                <input type="checkbox" id="remove-p2-checkbox"
-                       onchange="OnChangeOfRemovePlayerCheckbox(2)"/>
-                Black
-              </label>
-            </div>
-
-            <div class="player3-cell" id="remove-player3-div">
-              <label>
-                <input type="checkbox" id="remove-p3-checkbox"
-                       onchange="OnChangeOfRemovePlayerCheckbox(3)"/>
-                Green
-              </label>
             </div>
           </div>
 
@@ -1102,7 +1189,7 @@
             </div>
 
             <div class="button-div" id="terminate-game-button-div">
-              <button onclick="PromptTerminateGame()" >
+              <button onclick="PromptTerminateGame( ()=>{SetGameState('paused')} )" >
                 Terminate game
               </button>
             </div>
@@ -1114,6 +1201,79 @@
             </div>
 
           </div>
+        </div>
+
+        <div id="remove-players-panel">
+          <div id="resign-current-player-div">
+            <input type="radio" name="remove-player-radio-group"
+                   onchange="OnChangeOfPlayersToBeRemoved()"
+                   id="resign-current-player-input"/>
+            <label id="resign-label">
+              Current player resigned
+            </label>
+          </div>
+          <div id="checkmate-div">
+            <input type="radio" name="remove-player-radio-group" checked
+                   onchange="OnChangeOfPlayersToBeRemoved()"
+                   id="checkmate-input"/>
+            <label id="checkmate-label">
+                Checkmate:
+            </label>
+          </div>
+          <div>
+            <div id="checkmate-boxes">
+
+              <div class="player0-cell" id="checkmate-player0-div">
+                <label>
+                  <input type="checkbox" id="checkmate-p0-checkbox"
+                         onchange="OnChangeOfPlayersToBeRemoved()""/>
+                  White
+                </label>
+              </div>
+
+              <div class="player1-cell" id="checkmate-player1-div">
+                <label>
+                  <input type="checkbox" id="checkmate-p1-checkbox"
+                         onchange="OnChangeOfPlayersToBeRemoved()""/>
+                  Red
+                </label>
+              </div>
+
+              <div class="player2-cell" id="checkmate-player2-div">
+                <label>
+                  <input type="checkbox" id="checkmate-p2-checkbox"
+                         onchange="OnChangeOfPlayersToBeRemoved()""/>
+                  Black
+                </label>
+              </div>
+
+              <div class="player3-cell" id="checkmate-player3-div">
+                <label>
+                  <input type="checkbox" id="checkmate-p3-checkbox"
+                         onchange="OnChangeOfPlayersToBeRemoved()""/>
+                  Green
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div id="remove-players-panel-buttons">
+            <div>
+            <button onclick="CancelRemovingPlayers()">
+              Cancel
+            </button>
+            </div>
+            <div>
+            <button id="confirm-players-removal" onclick="ConfirmRemovingPlayers()">
+              Confirm
+            </button>
+            <button id="terminate-game-on-remove-panel"
+                    onclick="PromptTerminateGame(()=>{SetGameState('removing-player')})">
+              Terminate game
+            </button>
+            </div>
+          </div>
+
         </div>
 
         <div id="undo-panel">
