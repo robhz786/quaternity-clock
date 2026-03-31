@@ -545,24 +545,33 @@
      let wakelockHandle = null;
      let wakelockAcquired = false;
 
-     function SetValueOfButtonCorrespondingToKey(key, value) {
-         if (key === 'a' || key === 'A') {
-             buttonsSet.buttons[0] = value;
-         } else if (key === 'b' || key === 'B') {
-             buttonsSet.buttons[1] = value;
-         } else if (key === 'c' || key === 'C') {
-             buttonsSet.buttons[2] = value;
-         } else if (key === 'd' || key === 'D') {
-             buttonsSet.buttons[3] = value;
+     function SetValueOfButtonCorrespondingToKey(event, value) {
+         switch(event.code) {
+             case 'KeyA':
+             case 'Digit1':
+                 buttonsSet.buttons[0] = value;
+                 break;
+             case 'KeyB':
+             case 'Digit2':
+                 buttonsSet.buttons[1] = value;
+                 break;
+             case 'KeyC':
+             case 'Digit3':
+                 buttonsSet.buttons[2] = value;
+                 break;
+             case 'KeyD':
+             case 'Digit4':
+                 buttonsSet.buttons[3] = value;
+                 break;
          }
      }
 
      function OnKeyDown(event) {
-         SetValueOfButtonCorrespondingToKey(event.key, true);
+         SetValueOfButtonCorrespondingToKey(event, true);
      }
 
      function OnKeyUp(envent) {
-         SetValueOfButtonCorrespondingToKey(event.key, false);
+         SetValueOfButtonCorrespondingToKey(event, false);
      }
 
      document.addEventListener('keydown', OnKeyDown);
