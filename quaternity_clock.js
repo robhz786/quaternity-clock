@@ -1,19 +1,70 @@
 
-function playBeep(duration_sec) {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function AddBeep(audioCtx, gainNode, frequencyHz, startTime, stopTime)
+{
     const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain(); // To control volume
-
     oscillator.type = 'sine'; // Or 'square', 'sawtooth', 'triangle'
-    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // 440 Hz (A4)
-    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); // Set volume (0 to 1)
-
+    oscillator.frequency.setValueAtTime(frequencyHz, startTime);
     oscillator.connect(gainNode);
+    oscillator.start(startTime);
+    oscillator.stop(stopTime);
+}
+
+function playBeep(frequencyHz, duration_sec) {
+    const volume = 1;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioCtx.createGain(); // To control volume
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
     gainNode.connect(audioCtx.destination);
 
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + duration_sec);
+    let now = audioCtx.currentTime;
+    AddBeep(audioCtx, gainNode, frequencyHz, now, now + duration_sec);
 }
+
+function playUnpauseBeep() {
+    playBeep(440, 1.0);
+}
+
+function playBeep1minuteRemaining() {
+    playBeep(700, 1.0);
+}
+
+function AddBeep(audioCtx, gainNode, frequencyHz, startTime, stopTime)
+{
+    const oscillator = audioCtx.createOscillator();
+    oscillator.type = 'sine'; // Or 'square', 'sawtooth', 'triangle'
+    oscillator.frequency.setValueAtTime(frequencyHz, startTime);
+    oscillator.connect(gainNode);
+    oscillator.start(startTime);
+    oscillator.stop(stopTime);
+}
+
+function playBeep10secondsRemaining() {
+    const volume = 1;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioCtx.createGain(); // To control volume
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gainNode.connect(audioCtx.destination);
+
+    const frequencyHz = 700;
+    let now = audioCtx.currentTime;
+    AddBeep(audioCtx, gainNode, frequencyHz, now,        now + 0.42);
+    AddBeep(audioCtx, gainNode, frequencyHz, now + 0.45, now + 1.0);
+}
+
+function playTimeoutBeep() {
+    const volume = 1;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioCtx.createGain(); // To control volume
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gainNode.connect(audioCtx.destination);
+
+    const frequencyHz = 600;
+    let now = audioCtx.currentTime;
+    AddBeep(audioCtx, gainNode, frequencyHz, now,        now + 0.42);
+    AddBeep(audioCtx, gainNode, frequencyHz, now + 0.45, now + 1.0);
+    AddBeep(audioCtx, gainNode, frequencyHz, now + 1.03, now + 1.5);
+}
+
 
 class QuaternityPlayerTimeCounter {
     constructor(time_sec, additionPerRound_sec) {
@@ -31,7 +82,14 @@ class QuaternityPlayerTimeCounter {
         return this._DoAdvanceTime_ms(elapsedTime_ms, this._additionPerRound_ms);
     }
     SubtractTime(elapsedTime_ms) {
-        return this._DoAdvanceTime_ms(elapsedTime_ms, 0);
+        const before = this._remainingTime_ms;
+        const after = this._DoAdvanceTime_ms(elapsedTime_ms, 0);
+        if (before >= 60000 && after < 60000 ) {
+            playBeep1minuteRemaining();
+        } else if (before >= 10000 && after < 10000 ) {
+            playBeep10secondsRemaining();
+        }
+        return after;
     }
     _DoAdvanceTime_ms(subtraction_ms, addition_ms) {
         if (this._remainingTime_ms > subtraction_ms) {
@@ -300,6 +358,7 @@ class QuaternityClock {
         this._thresholdTimestamp = 0;
         this._ThresholdTimeCallback = (timestamp)=>{ this._Run(timestamp)};
         this._RequestAnimationFrame();
+        playUnpauseBeep();
     }
 
     UnpauseOnNextPlayer() {
@@ -416,7 +475,7 @@ class QuaternityClock {
     }
 
     _OnCurrentPlayerTimeOut() {
-        playBeep(1.0);
+        playTimeoutBeep();
         const playerIdx = this._currentPlayerIdx;
         this._ui.SetPlayerRemainingTimeToZero(playerIdx);
         this._currentPlayer.onGame = false;
