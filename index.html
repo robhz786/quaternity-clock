@@ -376,6 +376,10 @@
                      height: 15vh;
                      width: 40vw;
                      font-size: 6vh;
+                     svg {
+                         width: min(10vh, 10vw);
+                         height: min(10vh, 10vw);
+                     }
                  }
              }
          }
@@ -499,19 +503,8 @@
              background-color: green;
          }
      }
-     svg.unpause-button[data-player='white'] {
-         --player-color: white;
-     }
-     svg.unpause-button[data-player='red'] {
-         --player-color: red;
-     }
-     svg.unpause-button[data-player='black'] {
-         --player-color: black;
-     }
-     svg.unpause-button[data-player='green'] {
-         --player-color: green;
-     }
      svg.unpause-button {
+         --player-color: gray;
          circle {
              stroke: var(--player-color);
          }
@@ -519,7 +512,18 @@
              fill: var(--player-color);
          }
      }
-
+     svg.unpause-button[data-player-index='0'] {
+         --player-color: white;
+     }
+     svg.unpause-button[data-player-index='1'] {
+         --player-color: red;
+     }
+     svg.unpause-button[data-player-index='2'] {
+         --player-color: black;
+     }
+     svg.unpause-button[data-player-index='3'] {
+         --player-color: green;
+     }
     </style>
     <script src="quaternity_clock.js"></script>
     <script>
@@ -754,15 +758,29 @@
          return { terminate: false, confirm: checkmatesCount > 0 };
      }
 
+     function PlayerAfterCheckmate() {
+         let p = game.NextActivePlayerIdx();
+         while (p != game.CurrentPlayerIdx() && // <- should not be necessary really
+                document.getElementById(checkmateBoxes[p]).checked === true)
+         {
+             p = game.PlayerFollowing(p);
+         }
+         return p;
+     }
+
      function OnChangeOfPlayersToBeRemoved() {
          const terminateButton = document.getElementById("terminate-game-on-remove-panel");
          const unpauseButton = document.getElementById("confirm-players-removal");
 
+         const resignationChecked = document.getElementById("resign-current-player-input").checked;
          const shallShow = DisplayStatusOfButtonsInRemovePlayersPanel();
          terminateButton.style.display = shallShow.terminate ? 'block' : 'none';
          unpauseButton.style.display = shallShow.confirm ? 'block' : 'none';
-
-         const resignationChecked = document.getElementById("resign-current-player-input").checked;
+         if (shallShow.confirm) {
+             // update color of unpause icon
+             const p = resignationChecked ? game.NextActivePlayerIdx() : PlayerAfterCheckmate();
+             document.getElementById("unpause-icon-after-player-removal").dataset.playerIndex = p;
+         }
          if (resignationChecked || game.AlivePlayersCount() <= 2) {
              for (let boxDivId of checkmateBoxDivs) {
                  document.getElementById(boxDivId).style.display = "none";
@@ -1012,21 +1030,6 @@
     </script>
   </head>
   <body>
-    <template id="unpause-button-icon">
-      <svg class="unpause-button" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="grad1" cx="70%" cy="30%" r="70%" fx="50%" fy="50%">
-            <stop offset="0%" stop-color="lightgrey" />
-            <stop offset="100%" stop-color="grey" />
-          </radialGradient>
-        </defs>
-        <circle r="48" cx="50" cy="50" fill="url(#grad1)"
-                stroke="yellow" stroke-width="2"/>
-        <polygon points="30,15.36 90,50 30,84.64" fill="yellow"
-                 stroke="gray" stroke-width="2"/>
-      </svg>
-    </template>
-
     <div id="quaternity-clock" data-gamestate="not-started">
       <div id="start-panel-div">
         <div class="time-inputs">
@@ -1284,8 +1287,21 @@
             </button>
             </div>
             <div>
-            <button id="confirm-players-removal" onclick="ConfirmRemovingPlayers()">
-              Confirm
+              <button id="confirm-players-removal" onclick="ConfirmRemovingPlayers()">
+                Confirm
+                <svg id="unpause-icon-after-player-removal" class="unpause-button"
+                    viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <radialGradient id="grad1" cx="70%" cy="30%" r="70%" fx="50%" fy="50%">
+                      <stop offset="0%" stop-color="lightgrey" />
+                      <stop offset="100%" stop-color="grey" />
+                    </radialGradient>
+                  </defs>
+                  <circle r="48" cx="50" cy="50" fill="url(#grad1)"
+                          stroke="yellow" stroke-width="2"/>
+                  <polygon points="30,15.36 90,50 30,84.64" fill="yellow"
+                           stroke="gray" stroke-width="2"/>
+                </svg>
             </button>
             <button id="terminate-game-on-remove-panel"
                     onclick="PromptTerminateGame(()=>{SetGameState('removing-player')})">

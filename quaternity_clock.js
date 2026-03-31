@@ -15,7 +15,6 @@ function playBeep(duration_sec) {
     oscillator.stop(audioCtx.currentTime + duration_sec);
 }
 
-
 class QuaternityPlayerTimeCounter {
     constructor(time_sec, additionPerRound_sec) {
         this.onGame = true;
@@ -448,7 +447,10 @@ class QuaternityClock {
     }
 
     NextActivePlayerIdx() {
-        let idx = this._currentPlayerIdx;
+        return this.PlayerFollowing(this._currentPlayerIdx);
+    }
+
+    PlayerFollowing(idx) {
         let count = 0;
         do {
             if (++count === 4) {
